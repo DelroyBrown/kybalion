@@ -1,0 +1,216 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Ground                                                              */
+/* ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: dark;
+  --focus-ring: #bfa05d;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-ink-950 text-parchment-100 font-sans antialiased;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(191, 160, 93, 0.28);
+  color: #f4ecdd;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Quiet scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2e2921 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2e2921;
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reader themes                                                       */
+/* Applied via data-reader-theme on the reading surface. Each theme    */
+/* keeps AA contrast between --reader-ink and --reader-bg.             */
+/* ------------------------------------------------------------------ */
+
+[data-reader-theme] {
+  background: var(--reader-bg);
+  color: var(--reader-ink);
+}
+
+[data-reader-theme='midnight'] {
+  --reader-bg: #11141c;
+  --reader-surface: #171b25;
+  --reader-ink: #e7e0cf;
+  --reader-muted: #9a917d;
+  --reader-faint: #6b6455;
+  --reader-accent: #c9ad6a;
+  --reader-rule: rgba(201, 173, 106, 0.16);
+  --reader-mark: rgba(201, 173, 106, 0.55);
+}
+
+[data-reader-theme='obsidian'] {
+  --reader-bg: #0c0b0a;
+  --reader-surface: #141210;
+  --reader-ink: #e6ddc9;
+  --reader-muted: #978d77;
+  --reader-faint: #675f4f;
+  --reader-accent: #bfa05d;
+  --reader-rule: rgba(191, 160, 93, 0.14);
+  --reader-mark: rgba(191, 160, 93, 0.55);
+}
+
+[data-reader-theme='parchment'] {
+  color-scheme: light;
+  --reader-bg: #e9dfc9;
+  --reader-surface: #efe7d4;
+  --reader-ink: #2c2518;
+  --reader-muted: #6a5f49;
+  --reader-faint: #948a71;
+  --reader-accent: #7a5f28;
+  --reader-rule: rgba(90, 72, 40, 0.25);
+  --reader-mark: rgba(122, 95, 40, 0.6);
+}
+
+[data-reader-theme='sepia'] {
+  --reader-bg: #221a10;
+  --reader-surface: #2b2115;
+  --reader-ink: #e8d8ba;
+  --reader-muted: #a3906f;
+  --reader-faint: #75664c;
+  --reader-accent: #c99a5b;
+  --reader-rule: rgba(201, 154, 91, 0.18);
+  --reader-mark: rgba(201, 154, 91, 0.55);
+}
+
+[data-reader-theme='crimson'] {
+  --reader-bg: #170f10;
+  --reader-surface: #1f1415;
+  --reader-ink: #e4d3c4;
+  --reader-muted: #a08a7c;
+  --reader-faint: #6f5e55;
+  --reader-accent: #b56a6d;
+  --reader-rule: rgba(181, 106, 109, 0.18);
+  --reader-mark: rgba(181, 106, 109, 0.55);
+}
+
+/* ------------------------------------------------------------------ */
+/* Reading text                                                        */
+/* ------------------------------------------------------------------ */
+
+.reader-text {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: calc(1.125rem * var(--reader-font-scale, 1));
+  line-height: var(--reader-line-height, 1.9);
+  color: var(--reader-ink);
+}
+
+.reader-text p + p {
+  margin-top: 1.25em;
+}
+
+/* Inline passage marker: a thin dotted underline, never a glow. */
+.passage-mark {
+  cursor: pointer;
+  text-decoration: underline dotted var(--reader-mark);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28em;
+  transition: background-color 160ms ease, text-decoration-color 160ms ease;
+  border-radius: 2px;
+}
+.passage-mark:hover,
+.passage-mark:focus-visible {
+  background: color-mix(in srgb, var(--reader-accent) 12%, transparent);
+  text-decoration-style: solid;
+}
+.passage-mark[data-active='true'] {
+  background: color-mix(in srgb, var(--reader-accent) 18%, transparent);
+  text-decoration-style: solid;
+}
+
+/* User highlights — restrained washes that keep text legible. */
+.user-highlight-gold { background: rgba(191, 160, 93, 0.22); }
+.user-highlight-ember { background: rgba(178, 106, 76, 0.22); }
+.user-highlight-violet { background: rgba(131, 113, 143, 0.24); }
+.user-highlight-sage { background: rgba(138, 148, 120, 0.22); }
+[data-reader-theme='parchment'] .user-highlight-gold { background: rgba(163, 135, 74, 0.3); }
+[data-reader-theme='parchment'] .user-highlight-ember { background: rgba(150, 73, 79, 0.24); }
+[data-reader-theme='parchment'] .user-highlight-violet { background: rgba(106, 90, 118, 0.26); }
+[data-reader-theme='parchment'] .user-highlight-sage { background: rgba(111, 122, 96, 0.28); }
+
+/* ------------------------------------------------------------------ */
+/* Shared primitives                                                   */
+/* ------------------------------------------------------------------ */
+
+.caps-label {
+  @apply font-sans uppercase tracking-widecaps text-[0.6875rem] font-medium;
+}
+
+.hairline {
+  border-color: rgba(191, 160, 93, 0.14);
+}
+
+.editorial-body {
+  @apply font-sans text-[0.9375rem] leading-relaxed text-parchment-200;
+}
+
+/* Fine film grain, applied once at the app root. */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* Interactive cards rise very slightly under the pointer. */
+.lift {
+  transition:
+    transform 0.45s cubic-bezier(0.25, 0.1, 0.25, 1),
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+.lift:hover {
+  transform: translateY(-3px);
+}
+
+/* Safe-area padding for notched phones. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

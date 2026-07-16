@@ -1,0 +1,95 @@
+import { useEffect, useRef } from 'react'
+
+import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
+import { useReaderStore } from '../../stores/readerStore'
+
+/**
+ * The atmosphere layer: slow-drifting dust motes over dim pools of light,
+ * rendered on one fixed canvas behind everything. It pauses when the tab is
+ * hidden, thins out on small screens, and is disabled entirely for users
+ * who prefer reduced motion or turn ambient effects off.
+ */
+export function AmbientBackground() {
+  const canvasRef = useRef(null)
+  const reducedMotion = usePrefersReducedMotion()
+  const ambientEffects = useReaderStore((state) => state.settings.ambientEffects)
+  const userReduceMotion = useReaderStore((state) => state.settings.reduceMotion)
+  const enabled = ambientEffects && !reducedMotion && !userReduceMotion
+
+  useEffect(() => {
+    if (!enabled) return undefined
+    const canvas = canvasRef.current
+    const context = canvas.getContext('2d')
+    let frame = 0
+    let running = true
+    let particles = []
+
+    const resize = () => {
+      canvas.width = window.innerWidth * window.devicePixelRatio
+      canvas.height = window.innerHeight * window.devicePixelRatio
+      canvas.style.width = `${window.innerWidth}px`
+      canvas.style.height = `${window.innerHeight}px`
+      const density = window.innerWidth < 768 ? 26 : 60
+      particles = Array.from({ length: density }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: (0.4 + Math.random() * 1.1) * window.devicePixelRatio,
+        speedY: (0.02 + Math.random() * 0.08) * window.devicePixelRatio,
+        driftX: (Math.random() - 0.5) * 0.05 * window.devicePixelRatio,
+        alpha: 0.04 + Math.random() * 0.1,
+        phase: Math.random() * Math.PI * 2,
+      }))
+    }
+
+    const draw = () => {
+      if (!running) return
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      const time = performance.now() / 1000
+      for (const particle of particles) {
+        particle.y -= particle.speedY
+        particle.x += particle.driftX + Math.sin(time * 0.3 + particle.phase) * 0.04
+        if (particle.y < -4) {
+          particle.y = canvas.height + 4
+          particle.x = Math.random() * canvas.width
+        }
+        context.beginPath()
+        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
+        context.fillStyle = `rgba(214, 190, 140, ${particle.alpha})`
+        context.fill()
+      }
+      frame = requestAnimationFrame(draw)
+    }
+
+    const onVisibility = () => {
+      running = !document.hidden
+      if (running) frame = requestAnimationFrame(draw)
+      else cancelAnimationFrame(frame)
+    }
+
+    resize()
+    frame = requestAnimationFrame(draw)
+    window.addEventListener('resize', resize)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', resize)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [enabled])
+
+  return (
+    <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden">
+      {/* Dim pools of light */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 55% 45% at 30% 12%, rgba(191,160,93,0.05), transparent 70%),' +
+            'radial-gradient(ellipse 45% 40% at 78% 80%, rgba(106,90,118,0.05), transparent 70%),' +
+            'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(20,17,13,0.4), transparent 100%)',
+        }}
+      />
+      {enabled && <canvas ref={canvasRef} className="absolute inset-0" />}
+    </div>
+  )
+}
