@@ -1,0 +1,75 @@
+# Render Blueprint — deploys the whole stack in one go:
+#   1. PostgreSQL database        (kybalion-db)
+#   2. Django API web service     (kybalion-api)
+#   3. React static site          (kybalion)
+#
+# In Render: New + → Blueprint → connect the GitHub repo → Apply.
+#
+# AFTER the first deploy, check the two URLs below. If Render had to add a
+# suffix to a service name (because the subdomain was taken), update:
+#   - VITE_API_BASE_URL on the static site  → the API's actual URL + /api
+#   - CORS_ALLOWED_ORIGINS on the API       → the static site's actual URL
+# then redeploy both.
+
+databases:
+  - name: kybalion-db
+    plan: free
+    region: frankfurt
+
+services:
+  # ----- Django API -----
+  - type: web
+    name: kybalion-api
+    runtime: python
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    # Free tier has no pre-deploy hook or shell, so migrate + first-time seed
+    # run at boot. --if-empty makes the seed a no-op once content exists.
+    startCommand: >
+      python manage.py migrate &&
+      python manage.py seed_content --if-empty &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    healthCheckPath: /api/books/the-kybalion/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: 'False'
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://kybalion.onrender.com
+      - key: DATABASE_NAME
+        fromDatabase: { name: kybalion-db, property: database }
+      - key: DATABASE_USER
+        fromDatabase: { name: kybalion-db, property: user }
+      - key: DATABASE_PASSWORD
+        fromDatabase: { name: kybalion-db, property: password }
+      - key: DATABASE_HOST
+        fromDatabase: { name: kybalion-db, property: host }
+      - key: DATABASE_PORT
+        fromDatabase: { name: kybalion-db, property: port }
+
+  # ----- React frontend -----
+  - type: web
+    name: kybalion
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://kybalion-api.onrender.com/api
+    routes:
+      # SPA: every path serves index.html and React Router takes over.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

@@ -45,8 +45,18 @@ BOOK_TEXT_PATH = Path(__file__).resolve().parents[2] / "data" / "kybalion_1908.j
 class Command(BaseCommand):
     help = "Seed the database with the verbatim 1908 text and curated commentary (keeps user data)."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--if-empty",
+            action="store_true",
+            help="Only seed when no book exists yet (safe to run on every deploy).",
+        )
+
     @transaction.atomic
     def handle(self, *args, **options):
+        if options["if_empty"] and Book.objects.exists():
+            self.stdout.write("Content already present — skipping seed (--if-empty).")
+            return
         book_text = self._load_book_text()
         self._wipe_content()
         principles = self._create_principles()
