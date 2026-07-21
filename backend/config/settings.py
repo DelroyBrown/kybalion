@@ -1,5 +1,5 @@
 """
-Django settings for the Kybalion Experience backend.
+Django settings for The Perennial backend.
 
 Secrets and deployment-specific values come from environment variables
 (optionally loaded from a `.env` file at the repository root or backend/).

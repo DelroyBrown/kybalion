@@ -1,5 +1,5 @@
 """
-Seed content for the Kybalion Experience: book metadata, the seven
+Seed content for The Perennial: book metadata, the seven
 principles, annotation types, definitions, and visualisation references.
 
 CONTENT POLICY

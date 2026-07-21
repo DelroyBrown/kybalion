@@ -5,7 +5,8 @@ import { useActiveBook } from '../stores/appStore'
 export function useDocumentTitle(title) {
   const book = useActiveBook()
   useEffect(() => {
-    const base = book.title
-    document.title = title ? `${title} — ${base}` : `${base} — An Interactive Study Edition`
+    document.title = title
+      ? `${title} — ${book.title} · The Perennial`
+      : `${book.title} · The Perennial`
   }, [title, book.title])
 }

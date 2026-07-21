@@ -18,8 +18,24 @@ export const staggerChildren = {
   animate: { transition: { staggerChildren: 0.08 } },
 }
 
+/**
+ * Route changes: the leaving page sinks and dims briefly, the arriving one
+ * rises into place with a long settling ease — a page being turned rather
+ * than swapped. Transform + opacity only, so even the longest chapters
+ * stay cheap to animate.
+ */
 export const pageTransition = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
-  exit: { opacity: 0, transition: { duration: 0.2, ease: EASE } },
+  initial: { opacity: 0, y: 22, scale: 0.992 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: -12,
+    scale: 0.996,
+    transition: { duration: 0.26, ease: [0.4, 0, 1, 1] },
+  },
 }

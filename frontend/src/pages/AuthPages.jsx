@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 import { useLogin, useMergeLocalProgress, useRegister } from '../api/auth'
 import { Button } from '../components/common/Button'
-import { Sigil } from '../components/common/Sigil'
+import { PerennialMark } from '../components/common/PerennialMark'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 
@@ -34,7 +34,7 @@ function AuthShell({ title, children, footer }) {
   return (
     <div className="mx-auto max-w-sm px-6 py-16">
       <div className="text-center">
-        <Sigil size={56} className="text-gold-500 mx-auto" />
+        <PerennialMark size={56} className="text-gold-500 mx-auto" />
         <h1 className="mt-6 font-display font-light text-3xl text-parchment-100">{title}</h1>
       </div>
       <div className="mt-10">{children}</div>

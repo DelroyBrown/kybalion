@@ -23,6 +23,6 @@ urlpatterns = [
     path("api/me/journal/", include("journal.urls")),
 ]
 
-admin.site.site_header = "Kybalion Experience — Content Administration"
+admin.site.site_header = "The Perennial — Content Administration"
 admin.site.site_title = "Kybalion Admin"
 admin.site.index_title = "Manage the archive"

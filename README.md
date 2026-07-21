@@ -1,6 +1,7 @@
-# The Kybalion & The Ethiopian Bible — An Interactive Study Edition
+# The Perennial — A Living Library of Sacred Texts
 
-A dark, atmospheric, production-grade web application holding two books —
+A dark, atmospheric, production-grade web application — a growing library
+of sacred and wisdom texts. It currently holds two books —
 *The Kybalion* (Three Initiates, 1908) and *The Ethiopian Bible* (the
 broader canon of the Ethiopian Orthodox Tewahedo Church, ninety books
 assembled from public-domain and freely licensed English translations) —
