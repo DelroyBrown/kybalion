@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 
 import { BookEmblem } from '../components/common/BookEmblem'
+import { CosmicBackground } from '../components/common/CosmicBackground'
 import { usePrefersReducedMotion } from '../hooks/useMediaQuery'
 import { BOOKS, BOOK_ORDER, useAppStore } from '../stores/appStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
@@ -19,7 +20,7 @@ import { EASE } from '../utils/motion'
 // book (and colour mode) the rest of the interface is currently wearing.
 const COVERS = {
   'the-kybalion': {
-    ground: '#0f0d0a',
+    ground: 'rgba(15, 13, 10, 0.8)',
     edge: 'rgba(191, 160, 93, 0.28)',
     edgeHover: 'rgba(191, 160, 93, 0.55)',
     accent: '#d3b878',
@@ -27,13 +28,14 @@ const COVERS = {
     text: '#ece2ce',
     muted: '#9a917d',
     glow: 'rgba(191, 160, 93, 0.09)',
+    halo: 'rgba(191, 160, 93, 0.2)',
     quote: '“The lips of wisdom are closed, except to the ears of Understanding.”',
     meta: 'Fifteen chapters · Seven principles · 1908',
     body:
       'The Hermetic philosophy of ancient Egypt and Greece — read the 1908 text with layered commentary, an interactive knowledge map, and a study companion for each principle.',
   },
   'ethiopian-bible': {
-    ground: '#090b15',
+    ground: 'rgba(9, 11, 21, 0.78)',
     edge: 'rgba(154, 148, 200, 0.30)',
     edgeHover: 'rgba(154, 148, 200, 0.6)',
     accent: '#b8b4df',
@@ -41,6 +43,7 @@ const COVERS = {
     text: '#e2e4ee',
     muted: '#8b90a8',
     glow: 'rgba(122, 118, 172, 0.10)',
+    halo: 'rgba(154, 148, 200, 0.22)',
     quote: '“In the beginning God created the heavens and the earth.”',
     meta: 'Ninety books · The broader canon · Tewahedo tradition',
     body:
@@ -75,16 +78,8 @@ export function LandingPage() {
   const at = (delay) => (reducedMotion ? 0 : delay)
 
   return (
-    <div className="relative min-h-dvh grain bg-ink-950 flex flex-col overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 45% 40% at 28% 30%, rgba(191,160,93,0.05), transparent 70%),' +
-            'radial-gradient(ellipse 45% 40% at 72% 30%, rgba(122,118,172,0.06), transparent 70%)',
-        }}
-      />
+    <div className="relative min-h-dvh grain flex flex-col overflow-hidden" style={{ background: '#07080f' }}>
+      <CosmicBackground />
 
       <div className="relative flex-1 flex flex-col items-center justify-center px-5 py-14">
         <motion.p
@@ -119,15 +114,15 @@ export function LandingPage() {
             const book = BOOKS[slug]
             const cover = COVERS[slug]
             return (
+              <div key={slug} className={index === 0 ? 'float-slow' : 'float-slow-late'}>
               <motion.button
-                key={slug}
                 type="button"
                 onClick={() => open(slug)}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: at(0.55 + index * 0.15), duration: 0.9, ease: EASE }}
                 whileHover={reducedMotion ? undefined : { y: -6 }}
-                className="group relative text-left rounded-sm border p-8 sm:p-10 transition-colors duration-300 focus-visible:outline-offset-4"
+                className="group relative w-full h-full text-left rounded-sm border p-8 sm:p-10 backdrop-blur-[2px] transition-colors duration-300 focus-visible:outline-offset-4"
                 style={{ background: cover.ground, borderColor: cover.edge }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = cover.edgeHover)}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = cover.edge)}
@@ -140,8 +135,15 @@ export function LandingPage() {
                 />
 
                 <div className="relative">
-                  <div style={{ color: cover.accentDim }}>
-                    <BookEmblem bookSlug={slug} size={72} />
+                  <div className="relative w-fit" style={{ color: cover.accentDim }}>
+                    <span
+                      aria-hidden="true"
+                      className="emblem-halo"
+                      style={{ background: `radial-gradient(circle, ${cover.halo}, transparent 70%)` }}
+                    />
+                    <div className="spin-slower">
+                      <BookEmblem bookSlug={slug} size={72} />
+                    </div>
                   </div>
 
                   <p className="caps-label mt-7" style={{ color: cover.muted }}>
@@ -184,6 +186,7 @@ export function LandingPage() {
                   </span>
                 </div>
               </motion.button>
+              </div>
             )
           })}
         </div>

@@ -5,10 +5,11 @@ import { useAppStore } from '../../stores/appStore'
 import { useReaderStore } from '../../stores/readerStore'
 
 /**
- * The atmosphere layer: slow-drifting dust motes over dim pools of light,
- * rendered on one fixed canvas behind everything. It pauses when the tab is
- * hidden, thins out on small screens, and is disabled entirely for users
- * who prefer reduced motion or turn ambient effects off.
+ * The atmosphere layer: a quiet night sky — faint twinkling stars under
+ * slow-drifting dust motes over dim pools of light, rendered on one fixed
+ * canvas behind everything. It pauses when the tab is hidden, thins out on
+ * small screens, and is disabled entirely for users who prefer reduced
+ * motion or turn ambient effects off. Stars only appear in dark mode.
  */
 export function AmbientBackground() {
   const canvasRef = useRef(null)
@@ -30,6 +31,8 @@ export function AmbientBackground() {
     let frame = 0
     let running = true
     let particles = []
+    let stars = []
+    const showStars = colorMode === 'dark'
 
     const resize = () => {
       canvas.width = window.innerWidth * window.devicePixelRatio
@@ -46,12 +49,28 @@ export function AmbientBackground() {
         alpha: 0.04 + Math.random() * 0.1,
         phase: Math.random() * Math.PI * 2,
       }))
+      const starCount = showStars ? (window.innerWidth < 768 ? 40 : 90) : 0
+      stars = Array.from({ length: starCount }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: (0.3 + Math.random() * 0.8) * window.devicePixelRatio,
+        alpha: 0.05 + Math.random() * 0.16,
+        twinkleSpeed: 0.25 + Math.random() * 1.0,
+        phase: Math.random() * Math.PI * 2,
+      }))
     }
 
     const draw = () => {
       if (!running) return
       context.clearRect(0, 0, canvas.width, canvas.height)
       const time = performance.now() / 1000
+      for (const star of stars) {
+        const twinkle = 0.5 + 0.5 * Math.sin(time * star.twinkleSpeed + star.phase)
+        context.beginPath()
+        context.arc(star.x, star.y, star.radius, 0, Math.PI * 2)
+        context.fillStyle = `rgba(226, 228, 238, ${(star.alpha * twinkle).toFixed(3)})`
+        context.fill()
+      }
       for (const particle of particles) {
         particle.y -= particle.speedY
         particle.x += particle.driftX + Math.sin(time * 0.3 + particle.phase) * 0.04

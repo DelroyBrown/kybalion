@@ -1,14 +1,16 @@
 import { Link } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 
-import { Sigil } from './Sigil'
+import { useActiveBook } from '../../stores/appStore'
+import { BookEmblem } from './BookEmblem'
 import { Button } from './Button'
 
 /** Empty state: quiet copy plus one useful next action. */
 export function EmptyState({ symbol = true, title, body, actionLabel, actionTo, onAction }) {
+  const activeBook = useActiveBook()
   return (
     <div className="flex flex-col items-center text-center py-16 px-6">
-      {symbol && <Sigil size={64} className="text-ink-500 mb-6" />}
+      {symbol && <BookEmblem bookSlug={activeBook.slug} size={64} className="text-ink-500 mb-6" />}
       <h3 className="font-display text-xl text-parchment-200">{title}</h3>
       {body && <p className="editorial-body mt-2 max-w-sm text-parchment-400">{body}</p>}
       {actionLabel && actionTo && (
@@ -62,9 +64,10 @@ export function TextSkeleton({ lines = 6 }) {
 }
 
 export function LoadingVeil({ label = 'Preparing the text' }) {
+  const activeBook = useActiveBook()
   return (
     <div className="flex flex-col items-center justify-center py-20" role="status" aria-live="polite">
-      <Sigil size={72} animated className="text-gold-500" />
+      <BookEmblem bookSlug={activeBook.slug} size={72} animated className="text-gold-500" />
       <p className="caps-label text-parchment-500 mt-6">{label}</p>
     </div>
   )

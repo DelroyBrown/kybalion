@@ -338,6 +338,104 @@ body {
   @apply font-sans text-[0.9375rem] leading-relaxed text-parchment-200;
 }
 
+/* ------------------------------------------------------------------ */
+/* Cosmic scene (landing)                                              */
+/* Nebulae breathe, orbital rings counter-rotate, covers float.        */
+/* The global reduced-motion rule freezes all of it.                   */
+/* ------------------------------------------------------------------ */
+
+.cosmic-nebula {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.cosmic-nebula-gold {
+  width: 55vw;
+  height: 45vh;
+  left: -10vw;
+  top: 2vh;
+  background: radial-gradient(ellipse, rgba(191, 160, 93, 0.13), transparent 65%);
+  animation: nebula-drift-a 46s ease-in-out infinite alternate;
+}
+.cosmic-nebula-violet {
+  width: 58vw;
+  height: 52vh;
+  right: -12vw;
+  top: 8vh;
+  background: radial-gradient(ellipse, rgba(122, 118, 172, 0.15), transparent 65%);
+  animation: nebula-drift-b 58s ease-in-out infinite alternate;
+}
+.cosmic-nebula-deep {
+  width: 72vw;
+  height: 48vh;
+  left: 14vw;
+  bottom: -20vh;
+  background: radial-gradient(ellipse, rgba(58, 72, 140, 0.11), transparent 65%);
+  animation: nebula-drift-c 70s ease-in-out infinite alternate;
+}
+@keyframes nebula-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.7; }
+  to { transform: translate3d(6vw, 4vh, 0) scale(1.15); opacity: 1; }
+}
+@keyframes nebula-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.1); opacity: 1; }
+  to { transform: translate3d(-5vw, 5vh, 0) scale(0.95); opacity: 0.65; }
+}
+@keyframes nebula-drift-c {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.6; }
+  to { transform: translate3d(4vw, -4vh, 0) scale(1.2); opacity: 0.95; }
+}
+
+.cosmic-rings {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  animation: rings-rotate 240s linear infinite;
+  will-change: transform;
+}
+.cosmic-rings-reverse {
+  animation: rings-rotate 170s linear infinite reverse;
+}
+@keyframes rings-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Book covers drift gently, out of phase with one another. */
+.float-slow {
+  animation: float-slow 9s ease-in-out infinite;
+}
+.float-slow-late {
+  animation: float-slow 11s ease-in-out 1.6s infinite;
+}
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* Emblems turn like slow constellations; their halo breathes. */
+.spin-slower {
+  animation: spin-slower 120s linear infinite;
+  will-change: transform;
+}
+@keyframes spin-slower {
+  to { transform: rotate(360deg); }
+}
+.emblem-halo {
+  position: absolute;
+  inset: -1.5rem;
+  border-radius: 9999px;
+  filter: blur(14px);
+  pointer-events: none;
+  animation: halo-pulse 6.5s ease-in-out infinite;
+}
+@keyframes halo-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.92); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+
 /* Fine film grain, applied once at the app root. */
 .grain::after {
   content: '';
