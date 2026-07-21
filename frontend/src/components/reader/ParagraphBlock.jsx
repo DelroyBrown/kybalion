@@ -20,9 +20,10 @@ export const ParagraphBlock = memo(
     {
       paragraph,
       globalOrder,
-      displayNumber, // overrides globalOrder in the margin (verse numbers)
+      displayNumber, // the verse number for scripture, overriding globalOrder
       showMarks,
       showNumbers,
+      inlineNumbers = false, // scripture: numerals inline at the verse head
       reveal = true,
       highlights = [],
       activePassageSlug,
@@ -108,7 +109,7 @@ export const ParagraphBlock = memo(
         className={cn('relative group cv-auto', isEditorial && 'my-6')}
         {...revealProps}
       >
-        {showNumbers && (displayNumber ?? globalOrder) != null && (
+        {showNumbers && !inlineNumbers && (displayNumber ?? globalOrder) != null && (
           <span
             className="absolute -left-10 top-1 hidden sm:block font-sans text-[0.6875rem] select-none"
             style={{ color: 'var(--reader-faint)' }}
@@ -147,6 +148,13 @@ export const ParagraphBlock = memo(
               fontSize: isEpigraph ? 'calc(1.25rem * var(--reader-font-scale, 1))' : undefined,
             }}
           >
+            {/* A sibling element, never part of paragraph.text: highlight and
+                passage offsets index into the text alone and must not shift. */}
+            {showNumbers && inlineNumbers && Number(displayNumber) > 0 && (
+              <span className="verse-num" aria-hidden="true">
+                {displayNumber}
+              </span>
+            )}
             {segments.map(renderSegment)}
           </p>
         )}

@@ -286,6 +286,25 @@ body {
   contain-intrinsic-size: auto 4rem;
 }
 
+/*
+ * Inline verse numbers — the scripture convention: a small raised numeral
+ * at the head of each verse. Unselectable, so copied text and highlight
+ * offsets never include it.
+ */
+.reader-text .verse-num {
+  display: inline-block;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.6em;
+  line-height: 1;
+  vertical-align: 0.45em;
+  margin-right: 0.4em;
+  color: var(--reader-accent);
+  opacity: 0.75;
+  user-select: none;
+  -webkit-user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Inline passage marker: a thin dotted underline, never a glow. */
 .passage-mark {
   cursor: pointer;

@@ -20,6 +20,15 @@ const STYLES = [
  * column, offering restrained highlight styles and an optional note.
  * Highlights anchor to paragraph identity + character offsets, so they
  * survive any layout or typography change.
+ *
+ * Touch needs care in three places. Tapping the toolbar collapses the
+ * native selection and fires touchend BEFORE the button's click — so any
+ * pointer that lands on the toolbar arms a short grace period during which
+ * dismissal is ignored (the offsets are already held in state; the save
+ * does not need the live selection). Selection-handle dragging never ends
+ * with a touchend on the text, so the selection itself is followed via
+ * debounced selectionchange. And the OS text menu sits above the selected
+ * words, so on coarse pointers the toolbar is placed below them instead.
  */
 export function SelectionToolbar({ containerRef }) {
   const [selection, setSelection] = useState(null)
@@ -28,46 +37,77 @@ export function SelectionToolbar({ containerRef }) {
   const authed = useAuthStore((state) => Boolean(state.access))
   const createHighlight = useCreateHighlight()
   const toolbarRef = useRef(null)
+  const interactingRef = useRef(false)
+  const interactingTimerRef = useRef(null)
+
+  const markInteracting = () => {
+    interactingRef.current = true
+    clearTimeout(interactingTimerRef.current)
+    interactingTimerRef.current = setTimeout(() => {
+      interactingRef.current = false
+    }, 600)
+  }
 
   useEffect(() => {
-    const onSelectionEnd = () => {
-      // Let the browser finish placing the selection first.
-      requestAnimationFrame(() => {
-        const domSelection = window.getSelection()
-        if (!domSelection || domSelection.isCollapsed || !containerRef.current) {
-          if (!toolbarRef.current?.contains(document.activeElement)) {
-            setSelection(null)
-            setShowNote(false)
-          }
-          return
-        }
-        const anchorParagraph = domSelection.anchorNode?.parentElement?.closest('[data-paragraph-id]')
-        const focusParagraph = domSelection.focusNode?.parentElement?.closest('[data-paragraph-id]')
-        if (!anchorParagraph || anchorParagraph !== focusParagraph) {
+    let debounce = null
+
+    const evaluate = () => {
+      const domSelection = window.getSelection()
+      if (!domSelection || domSelection.isCollapsed || !containerRef.current) {
+        if (!interactingRef.current && !toolbarRef.current?.contains(document.activeElement)) {
           setSelection(null)
-          return
+          setShowNote(false)
         }
-        const offsets = selectionOffsetsWithin(anchorParagraph)
-        if (!offsets) {
-          setSelection(null)
-          return
-        }
-        const rect = domSelection.getRangeAt(0).getBoundingClientRect()
-        setSelection({
-          paragraphId: Number(anchorParagraph.dataset.paragraphId),
-          ...offsets,
-          x: Math.max(12, Math.min(rect.left + rect.width / 2, window.innerWidth - 180)),
-          y: Math.max(60, rect.top - 12),
-        })
+        return
+      }
+      const anchorParagraph = domSelection.anchorNode?.parentElement?.closest('[data-paragraph-id]')
+      const focusParagraph = domSelection.focusNode?.parentElement?.closest('[data-paragraph-id]')
+      if (!anchorParagraph || anchorParagraph !== focusParagraph) {
+        setSelection(null)
+        return
+      }
+      const offsets = selectionOffsetsWithin(anchorParagraph)
+      if (!offsets) {
+        setSelection(null)
+        return
+      }
+      const rect = domSelection.getRangeAt(0).getBoundingClientRect()
+      if (rect.width === 0 && rect.height === 0) return
+      const coarse = window.matchMedia('(pointer: coarse)').matches
+      setSelection({
+        paragraphId: Number(anchorParagraph.dataset.paragraphId),
+        ...offsets,
+        placement: coarse ? 'below' : 'above',
+        x: Math.max(120, Math.min(rect.left + rect.width / 2, window.innerWidth - 120)),
+        y: coarse
+          ? Math.min(rect.bottom + 16, window.innerHeight - 140)
+          : Math.max(60, rect.top - 12),
       })
     }
-    document.addEventListener('mouseup', onSelectionEnd)
-    document.addEventListener('touchend', onSelectionEnd)
+
+    const onPointerEnd = () => {
+      if (interactingRef.current) return
+      // Let the browser finish placing the selection first.
+      requestAnimationFrame(evaluate)
+    }
+    const onSelectionChange = () => {
+      if (interactingRef.current) return
+      clearTimeout(debounce)
+      debounce = setTimeout(evaluate, 250)
+    }
+
+    document.addEventListener('mouseup', onPointerEnd)
+    document.addEventListener('touchend', onPointerEnd)
+    document.addEventListener('selectionchange', onSelectionChange)
     return () => {
-      document.removeEventListener('mouseup', onSelectionEnd)
-      document.removeEventListener('touchend', onSelectionEnd)
+      clearTimeout(debounce)
+      document.removeEventListener('mouseup', onPointerEnd)
+      document.removeEventListener('touchend', onPointerEnd)
+      document.removeEventListener('selectionchange', onSelectionChange)
     }
   }, [containerRef])
+
+  useEffect(() => () => clearTimeout(interactingTimerRef.current), [])
 
   const save = (style) => {
     createHighlight.mutate(
@@ -94,14 +134,25 @@ export function SelectionToolbar({ containerRef }) {
       {selection && (
         <motion.div
           ref={toolbarRef}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.16 }}
-          className="fixed z-[75] -translate-x-1/2 -translate-y-full"
-          style={{ left: selection.x, top: selection.y }}
+          className="fixed z-[75]"
+          style={{
+            left: selection.x,
+            top: selection.y,
+            x: '-50%',
+            y: selection.placement === 'above' ? '-100%' : '0%',
+          }}
           role="toolbar"
           aria-label="Highlight selection"
+          onPointerDownCapture={markInteracting}
+          onMouseDown={(event) => {
+            // Keep the text selection (and focus) where it is — except for
+            // the note input, which must be able to take the caret.
+            if (event.target.tagName !== 'INPUT') event.preventDefault()
+          }}
         >
           <div className="bg-ink-850 border border-ink-600 rounded-sm shadow-xl p-2.5">
             {authed ? (
@@ -115,7 +166,7 @@ export function SelectionToolbar({ containerRef }) {
                       title={style.label}
                       disabled={createHighlight.isPending}
                       onClick={() => save(style.key)}
-                      className="h-6 w-6 rounded-full border border-ink-500 hover:scale-110 transition-transform"
+                      className="h-7 w-7 rounded-full border border-ink-500 hover:scale-110 transition-transform"
                       style={{ background: style.swatch }}
                     />
                   ))}
@@ -123,7 +174,7 @@ export function SelectionToolbar({ containerRef }) {
                     type="button"
                     onClick={() => setShowNote((value) => !value)}
                     className={cn(
-                      'ml-1 font-sans text-xs px-2 py-1 rounded-sm',
+                      'ml-1 font-sans text-xs px-2 py-1.5 rounded-sm',
                       showNote ? 'text-gold-200 bg-gold-500/15' : 'text-parchment-400 hover:text-parchment-200'
                     )}
                   >

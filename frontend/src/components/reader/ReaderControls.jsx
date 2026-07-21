@@ -1,6 +1,7 @@
 import { Minus, Plus } from 'lucide-react'
 
 import { useSavePreferences } from '../../api/userData'
+import { useActiveBook } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import {
   DEFAULT_SETTINGS,
@@ -65,6 +66,7 @@ export function ReaderControls({ open, onClose }) {
   const { settings, setSetting, resetSettings } = useReaderStore()
   const authed = useAuthStore((state) => Boolean(state.access))
   const savePreferences = useSavePreferences()
+  const scripture = useActiveBook().chapterNumerals !== 'roman'
 
   const close = () => {
     if (authed) savePreferences.mutate(settings)
@@ -190,11 +192,19 @@ export function ReaderControls({ open, onClose }) {
 
       <SettingRow label="Display">
         <div className="space-y-2">
-          <Toggle
-            label="Paragraph numbers"
-            checked={settings.showParagraphNumbers}
-            onChange={(value) => setSetting('showParagraphNumbers', value)}
-          />
+          {scripture ? (
+            <Toggle
+              label="Verse numbers"
+              checked={settings.showVerseNumbers !== false}
+              onChange={(value) => setSetting('showVerseNumbers', value)}
+            />
+          ) : (
+            <Toggle
+              label="Paragraph numbers"
+              checked={settings.showParagraphNumbers}
+              onChange={(value) => setSetting('showParagraphNumbers', value)}
+            />
+          )}
           <Toggle
             label="Ambient effects"
             checked={settings.ambientEffects}

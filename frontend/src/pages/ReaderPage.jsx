@@ -178,7 +178,11 @@ export function ReaderPage() {
   // Reading modes.
   const mode = settings.mode
   const showMarks = mode !== 'clean'
-  const showNumbers = settings.showParagraphNumbers || mode === 'study'
+  // Scripture shows its real verse numbers by default (its own toggle);
+  // the Kybalion keeps opt-in margin numbers as before.
+  const showNumbers = scripture
+    ? settings.showVerseNumbers !== false
+    : settings.showParagraphNumbers || mode === 'study'
   const studyMode = mode === 'study'
   const reflectionMode = mode === 'reflection'
 
@@ -385,6 +389,7 @@ export function ReaderPage() {
                     displayNumber={scripture ? paragraph.order || null : undefined}
                     showMarks={showMarks}
                     showNumbers={showNumbers}
+                    inlineNumbers={scripture}
                     reveal={revealParagraphs}
                     highlights={highlightsByParagraph.get(paragraph.id) || EMPTY_HIGHLIGHTS}
                     activePassageSlug={activePassageSlug}

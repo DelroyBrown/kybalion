@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
   theme: 'midnight', // midnight | obsidian | parchment | sepia | crimson
   mode: 'guided', // clean | guided | study | reflection
   showParagraphNumbers: false,
+  showVerseNumbers: true, // scripture books: inline verse numerals
   ambientEffects: true,
   reduceMotion: false,
   showStreak: false,

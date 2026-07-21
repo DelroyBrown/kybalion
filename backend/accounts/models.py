@@ -10,6 +10,7 @@ DEFAULT_READER_SETTINGS = {
     "theme": "midnight",  # midnight | obsidian | parchment | sepia | crimson | abyss | sanctum
     "mode": "guided",  # clean | guided | study | reflection
     "showParagraphNumbers": False,
+    "showVerseNumbers": True,  # scripture books: inline verse numerals
     "ambientEffects": True,
     "reduceMotion": False,
     "showStreak": False,
