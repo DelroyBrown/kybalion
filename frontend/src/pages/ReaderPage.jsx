@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -14,10 +14,10 @@ import { motion } from 'framer-motion'
 
 import { useChapter } from '../api/library'
 import { useReflectionPrompts } from '../api/principles'
-import { useBookmarks, useHighlights, useToggleBookmark } from '../api/userData'
+import { useBookmarks, useHighlights, useProgress, useToggleBookmark } from '../api/userData'
 import { AnnotationPanel } from '../components/annotations/AnnotationPanel'
 import { IconButton } from '../components/common/Button'
-import { Reveal } from '../components/common/Reveal'
+import { Reveal, useRevealAllowed } from '../components/common/Reveal'
 import { ErrorState, LoadingVeil } from '../components/common/states'
 import { ChapterNavPanel } from '../components/reader/ChapterNavPanel'
 import { HoverPreview } from '../components/reader/HoverPreview'
@@ -28,8 +28,9 @@ import { PrincipleSymbol } from '../components/principles/PrincipleSymbol'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useIsDesktop } from '../hooks/useMediaQuery'
 import { useReadingProgressTracker } from '../hooks/useReadingProgressTracker'
-import { useActiveBook } from '../stores/appStore'
+import { useActiveBook, useAppStore } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
+import { useLocalProgressStore } from '../stores/localProgressStore'
 import { useReaderStore } from '../stores/readerStore'
 import { useUiStore } from '../stores/uiStore'
 import { accent } from '../utils/accents'
@@ -42,26 +43,99 @@ const WIDTH_CLASSES = {
   wide: 'max-w-reader-wide',
 }
 
+// Above this many paragraphs the per-paragraph scroll-in reveal is skipped:
+// mounting thousands of animated elements is what made scripture books crawl.
+const REVEAL_PARAGRAPH_LIMIT = 250
+
+const EMPTY_HIGHLIGHTS = []
+
+// Height of the sticky header plus breathing room, for restored positions.
+const SCROLL_ANCHOR_OFFSET = 88
+
+/**
+ * Instantly scroll the window so the element sits just under the header.
+ * Runs a second corrective pass on the next frame: with content-visibility
+ * the geometry settles only once the target region has actually rendered.
+ */
+function anchorScrollTo(element) {
+  if (!element) return false
+  element.scrollIntoView()
+  requestAnimationFrame(() => {
+    const top = element.getBoundingClientRect().top + window.scrollY - SCROLL_ANCHOR_OFFSET
+    window.scrollTo(0, Math.max(0, top))
+  })
+  return true
+}
+
+function paragraphByOrder(order) {
+  return document.querySelector(`[data-global-order="${order}"]`)
+}
+
+/**
+ * The thin progress line under the header. Updates the bar width directly
+ * on the DOM from a rAF-throttled scroll listener so scrolling never
+ * re-renders the reading column (thousands of paragraphs in long books).
+ */
+function ScrollProgressBar({ chapterSlug }) {
+  const barRef = useRef(null)
+
+  useEffect(() => {
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const doc = document.documentElement
+      const total = doc.scrollHeight - doc.clientHeight
+      const percent = total > 0 ? Math.min(100, (doc.scrollTop / total) * 100) : 0
+      if (barRef.current) barRef.current.style.width = `${percent}%`
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    update()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [chapterSlug])
+
+  return (
+    <div className="h-px relative" style={{ background: 'var(--reader-rule)' }} aria-hidden="true">
+      <div
+        ref={barRef}
+        className="absolute inset-y-0 left-0"
+        style={{ width: '0%', background: 'var(--reader-accent)' }}
+      />
+    </div>
+  )
+}
+
 export function ReaderPage() {
   const { chapterSlug } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: chapter, isLoading, isError, error, refetch } = useChapter(chapterSlug)
   const activeBook = useActiveBook()
+  const setActiveBook = useAppStore((state) => state.setActiveBook)
   const scripture = activeBook.chapterNumerals !== 'roman'
   const numeral = (n) => (scripture ? n : toRoman(n))
   useDocumentTitle(chapter ? (scripture ? chapter.title : `${toRoman(chapter.number)}. ${chapter.title}`) : 'Read')
 
   const settings = useReaderStore((state) => state.settings)
-  const { activePassageSlug, openPassage, closePassage, distractionFree, toggleDistractionFree } =
-    useUiStore()
+  // Individual selectors: ui-store churn (text selection, mobile menu) must
+  // not re-render a reading column that can hold thousands of paragraphs.
+  const activePassageSlug = useUiStore((state) => state.activePassageSlug)
+  const openPassage = useUiStore((state) => state.openPassage)
+  const closePassage = useUiStore((state) => state.closePassage)
+  const distractionFree = useUiStore((state) => state.distractionFree)
+  const toggleDistractionFree = useUiStore((state) => state.toggleDistractionFree)
   const authed = useAuthStore((state) => Boolean(state.access))
   const isDesktop = useIsDesktop()
+  const revealAllowed = useRevealAllowed()
 
   const [chaptersOpen, setChaptersOpen] = useState(false)
   const [controlsOpen, setControlsOpen] = useState(false)
   const [hoverPreview, setHoverPreview] = useState(null)
-  const [scrollPercent, setScrollPercent] = useState(0)
   const textContainerRef = useRef(null)
 
   const { data: highlightData } = useHighlights(authed ? chapterSlug : undefined)
@@ -94,6 +168,7 @@ export function ReaderPage() {
     () => new Map(orderedParagraphs.map((paragraph, index) => [paragraph.id, index + 1])),
     [orderedParagraphs]
   )
+  const revealParagraphs = revealAllowed && orderedParagraphs.length <= REVEAL_PARAGRAPH_LIMIT
 
   const { observeParagraph } = useReadingProgressTracker({
     chapterSlug,
@@ -107,17 +182,11 @@ export function ReaderPage() {
   const studyMode = mode === 'study'
   const reflectionMode = mode === 'reflection'
 
-  // Thin progress line under the header.
+  // Keep the app-level book in step with what is actually open, so a
+  // chapter resumed across books carries its own labels and atmosphere.
   useEffect(() => {
-    const onScroll = () => {
-      const doc = document.documentElement
-      const total = doc.scrollHeight - doc.clientHeight
-      setScrollPercent(total > 0 ? Math.min(100, (doc.scrollTop / total) * 100) : 0)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [chapterSlug])
+    if (chapter?.book) setActiveBook(chapter.book)
+  }, [chapter?.book, setActiveBook])
 
   // Deep link: /read/slug?passage=<slug> opens the annotation panel.
   useEffect(() => {
@@ -133,7 +202,41 @@ export function ReaderPage() {
   // Leaving the reader always restores the surrounding interface.
   useEffect(() => () => useUiStore.setState({ distractionFree: false }), [])
 
-  const onPassageHover = (passage, element) => {
+  // Restore the reading position: an explicit anchor (#section or ?p=) wins,
+  // otherwise signed-in readers resume at their server-saved paragraph and
+  // anonymous readers at the locally saved one.
+  const { data: serverProgress, isLoading: serverProgressLoading } = useProgress()
+  const localChapterProgress = useLocalProgressStore((state) => state.byChapter[chapterSlug])
+  const restoredChapterRef = useRef(null)
+  useEffect(() => {
+    if (!chapter) return
+    if (authed && serverProgressLoading) return
+    if (restoredChapterRef.current === chapterSlug) return
+    restoredChapterRef.current = chapterSlug
+
+    const hash = window.location.hash
+    if (hash && anchorScrollTo(document.getElementById(hash.slice(1)))) return
+
+    const explicit = Number(searchParams.get('p'))
+    if (explicit > 0 && anchorScrollTo(paragraphByOrder(explicit))) return
+
+    const server = authed ? (serverProgress || []).find((p) => p.chapter === chapterSlug) : null
+    const saved = server ? server.last_paragraph_order : localChapterProgress?.lastParagraphOrder || 0
+    const total = orderedParagraphs.length
+    // Resume mid-chapter; a chapter read to its end starts again at the top.
+    if (saved > 1 && saved < total) anchorScrollTo(paragraphByOrder(saved))
+  }, [
+    chapter,
+    chapterSlug,
+    authed,
+    serverProgress,
+    serverProgressLoading,
+    localChapterProgress,
+    orderedParagraphs.length,
+    searchParams,
+  ])
+
+  const onPassageHover = useCallback((passage, element) => {
     if (!passage || !element) {
       setHoverPreview(null)
       return
@@ -144,7 +247,7 @@ export function ReaderPage() {
       x: Math.min(rect.left, window.innerWidth - 320),
       y: Math.max(8, rect.top - 76),
     })
-  }
+  }, [])
 
   if (isLoading) return <LoadingVeil label="Opening the chapter" />
   if (isError) {
@@ -205,12 +308,7 @@ export function ReaderPage() {
             {distractionFree ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </IconButton>
         </div>
-        <div className="h-px relative" style={{ background: 'var(--reader-rule)' }} aria-hidden="true">
-          <div
-            className="absolute inset-y-0 left-0 transition-[width] duration-150"
-            style={{ width: `${scrollPercent}%`, background: 'var(--reader-accent)' }}
-          />
-        </div>
+        <ScrollProgressBar chapterSlug={chapterSlug} />
       </header>
 
       {/* Reading column */}
@@ -287,7 +385,8 @@ export function ReaderPage() {
                     displayNumber={scripture ? paragraph.order || null : undefined}
                     showMarks={showMarks}
                     showNumbers={showNumbers}
-                    highlights={highlightsByParagraph.get(paragraph.id) || []}
+                    reveal={revealParagraphs}
+                    highlights={highlightsByParagraph.get(paragraph.id) || EMPTY_HIGHLIGHTS}
                     activePassageSlug={activePassageSlug}
                     onOpenPassage={openPassage}
                     onPassageHover={onPassageHover}

@@ -7,6 +7,8 @@ import { useLocalProgressStore } from '../stores/localProgressStore'
 /**
  * Watches paragraphs scroll through the viewport and records reading
  * progress: locally for everyone, to the server for signed-in readers.
+ * Progress is flushed on an interval, when the tab is hidden or closed
+ * (with keepalive so the request survives navigation), and on unmount.
  * Also logs a reading session when the reader leaves the chapter.
  */
 export function useReadingProgressTracker({ chapterSlug, totalParagraphs }) {
@@ -62,8 +64,18 @@ export function useReadingProgressTracker({ chapterSlug, totalParagraphs }) {
     const interval = setInterval(flush, 12000)
     const startedAt = startedAtRef.current
 
+    // Closing the tab or switching apps never runs React cleanup, so the
+    // exact position is saved the moment the page goes out of view.
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush()
+    }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onHide)
+
     return () => {
       clearInterval(interval)
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onHide)
       flush()
       observerRef.current?.disconnect()
       const durationSeconds = Math.round((Date.now() - startedAt) / 1000)
@@ -76,7 +88,7 @@ export function useReadingProgressTracker({ chapterSlug, totalParagraphs }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterSlug, totalParagraphs])
+  }, [chapterSlug, totalParagraphs, flush])
 
   const observeParagraph = useCallback((element) => {
     if (element && observerRef.current) observerRef.current.observe(element)

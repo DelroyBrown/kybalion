@@ -276,6 +276,16 @@ body {
   margin-top: 1.25em;
 }
 
+/*
+ * Off-screen paragraphs skip layout and paint entirely. Scripture books
+ * hold thousands of verses on one page; without this the browser lays out
+ * and paints all of them on load and on every scroll frame.
+ */
+.reader-text .cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 4rem;
+}
+
 /* Inline passage marker: a thin dotted underline, never a glow. */
 .passage-mark {
   cursor: pointer;

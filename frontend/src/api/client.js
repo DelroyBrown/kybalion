@@ -47,7 +47,7 @@ function buildUrl(path, params) {
   return url.toString()
 }
 
-async function execute(path, { method = 'GET', body, params, accessToken } = {}) {
+async function execute(path, { method = 'GET', body, params, accessToken, keepalive } = {}) {
   const headers = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`
@@ -56,6 +56,9 @@ async function execute(path, { method = 'GET', body, params, accessToken } = {})
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    // keepalive lets small writes (reading position) finish even while the
+    // page is being closed or navigated away from.
+    keepalive: keepalive || undefined,
   })
 
   if (response.status === 204) return null

@@ -10,7 +10,7 @@ import { Reveal } from '../components/common/Reveal'
 import { Sigil } from '../components/common/Sigil'
 import { PrincipleSymbol } from '../components/principles/PrincipleSymbol'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import { useActiveBook } from '../stores/appStore'
+import { BOOKS, useActiveBook } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 import { accent } from '../utils/accents'
@@ -46,25 +46,37 @@ export function HomePage() {
   }, [prompts])
 
   const continueReading = useMemo(() => {
-    const bookSlugs = new Set((book?.chapters || []).map((c) => c.slug))
+    // Ethiopian Bible chapters are seeded with an `eb-` slug prefix.
+    const bookFor = (slug) => (slug.startsWith('eb-') ? BOOKS['ethiopian-bible'] : BOOKS['the-kybalion'])
     if (authed && serverProgress?.length) {
-      const inBook = serverProgress.filter((p) => bookSlugs.has(p.chapter))
-      const current = inBook.find((p) => !p.completed) || inBook[0]
+      // Ordered by -updated_at: resume the most recently touched unfinished
+      // chapter, whichever book it belongs to.
+      const current = serverProgress.find((p) => !p.completed) || serverProgress[0]
       if (current) {
         return {
           slug: current.chapter,
           title: current.chapter_title,
           number: current.chapter_number,
           percent: current.percent_complete,
+          book: bookFor(current.chapter),
         }
       }
     }
-    const local = Object.entries(localProgress).filter(([slug]) => bookSlugs.has(slug))
-    if (local.length && book) {
-      const [slug, progress] = local.sort((a, b) => (b[1].percent || 0) - (a[1].percent || 0))[0]
-      const chapter = book.chapters.find((c) => c.slug === slug)
+    // Anonymous progress lives locally; titles come from the loaded book's
+    // chapter list, so the most recent entry the open book can name wins.
+    const local = Object.entries(localProgress).sort(
+      (a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0)
+    )
+    for (const [slug, progress] of local) {
+      const chapter = book?.chapters?.find((c) => c.slug === slug)
       if (chapter) {
-        return { slug, title: chapter.title, number: chapter.number, percent: progress.percent }
+        return {
+          slug,
+          title: chapter.title,
+          number: chapter.number,
+          percent: progress.percent,
+          book: bookFor(slug),
+        }
       }
     }
     return null
@@ -102,8 +114,8 @@ export function HomePage() {
                 className="group lift mt-4 block border hairline rounded-sm p-6 hover:border-gold-600/60"
               >
                 <p className="font-sans text-xs text-parchment-500">
-                  {activeBook.chapterLabel}{' '}
-                  {activeBook.chapterNumerals === 'roman'
+                  {continueReading.book.chapterLabel}{' '}
+                  {continueReading.book.chapterNumerals === 'roman'
                     ? toRoman(continueReading.number)
                     : continueReading.number}
                 </p>

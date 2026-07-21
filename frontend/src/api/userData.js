@@ -196,7 +196,7 @@ export function useProgressSummary() {
 export function useSaveProgress() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload) => api('/me/progress/', { method: 'POST', body: payload }),
+    mutationFn: (payload) => api('/me/progress/', { method: 'POST', body: payload, keepalive: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['progress'] })
       queryClient.invalidateQueries({ queryKey: ['progress-summary'] })

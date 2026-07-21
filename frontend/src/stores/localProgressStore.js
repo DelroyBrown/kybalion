@@ -30,6 +30,7 @@ export const useLocalProgressStore = create(
                 ),
                 percent: Math.max(existing.percent, patch.percent ?? 0),
                 completed: existing.completed || Boolean(patch.completed),
+                updatedAt: Date.now(),
               },
             },
           }

@@ -1,5 +1,6 @@
 import Lenis from 'lenis'
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 import { useReaderStore } from '../../stores/readerStore'
@@ -16,12 +17,14 @@ export function getLenis() {
  * page glides rather than jumps. Touch scrolling stays native (it already
  * has physical inertia), inner panels opt out via `data-lenis-prevent`, and
  * the whole effect is disabled by `prefers-reduced-motion` or the in-app
- * motion setting.
+ * motion setting. The reader itself always scrolls natively — long scripture
+ * books make the damped glide feel sluggish, and reading rewards precision.
  */
 export function SmoothScroll() {
   const systemReduced = usePrefersReducedMotion()
   const userReduced = useReaderStore((state) => state.settings.reduceMotion)
-  const enabled = !systemReduced && !userReduced
+  const isReader = useLocation().pathname.startsWith('/read')
+  const enabled = !systemReduced && !userReduced && !isReader
 
   useEffect(() => {
     if (!enabled) return undefined

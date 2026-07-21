@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.db.models import Prefetch
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -53,6 +54,26 @@ class ChapterViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_class(self):
         return ChapterDetailSerializer if self.action == "retrieve" else ChapterListSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        # Chapter content is identical for every reader and only changes on a
+        # reseed, so the serialized payload is cached. Scripture books hold
+        # thousands of paragraphs; serializing them per request is what made
+        # chapters slow to open. Keyed by updated_at, a reseed invalidates.
+        slug = self.kwargs[self.lookup_field]
+        stamp = (
+            Chapter.objects.filter(slug=slug, is_published=True)
+            .values_list("updated_at", flat=True)
+            .first()
+        )
+        if stamp is None:
+            return super().retrieve(request, *args, **kwargs)  # 404 path
+        key = f"chapter-detail:{slug}:{stamp.timestamp()}"
+        data = cache.get(key)
+        if data is None:
+            data = super().retrieve(request, *args, **kwargs).data
+            cache.set(key, data, 24 * 60 * 60)
+        return Response(data)
 
 
 class PassageViewSet(viewsets.ReadOnlyModelViewSet):
