@@ -1,16 +1,29 @@
-# The Kybalion — An Interactive Study Edition
+# The Kybalion & The Ethiopian Bible — An Interactive Study Edition
 
-A dark, atmospheric, production-grade web application for reading and
-studying *The Kybalion* (Three Initiates, 1908): an immersive digital book,
-a philosophical study platform, an interactive knowledge map, and a private
-reflection journal — in one experience.
+A dark, atmospheric, production-grade web application holding two books —
+*The Kybalion* (Three Initiates, 1908) and *The Ethiopian Bible* (the
+broader canon of the Ethiopian Orthodox Tewahedo Church, ninety books
+assembled from public-domain and freely licensed English translations) —
+switchable from the navigation rail, each with its own colour scheme
+(tarnished gold on warm near-black for the Kybalion; moon-silver on indigo
+night for the Bible), plus app-wide dark and light modes and a slow,
+weighted scroll throughout.
 
-> Original text: the complete chapters I–XV of the public-domain 1908
+> Kybalion text: the complete chapters I–XV of the public-domain 1908
 > edition, loaded verbatim from the Project Gutenberg transcription
-> (ebook #14209). All explanations, definitions, examples, and
+> (ebook #14209). Ethiopian Bible text: the World English Bible (OT, NT,
+> and deuterocanon), R. H. Charles's 1 Enoch (1917), and free community
+> translations of Meqabyan from the Ge'ez — full provenance in
+> `sources/MANIFEST.md`; books with no free English text yet appear as
+> clearly marked placeholders. All explanations, definitions, examples, and
 > visualisations are modern editorial additions, always visibly separated
 > from the original text. AI-generated commentary, where present, is
 > explicitly labelled with its model and review status.
+>
+> Content pipeline: `python scripts/build_ethiopian_bible.py` regenerates
+> `backend/library/data/ethiopian_bible.json` from `sources/`;
+> `python manage.py seed_ethiopian_bible` loads it (the deploy runs both
+> seed commands with `--if-empty`).
 
 ## Product concept
 

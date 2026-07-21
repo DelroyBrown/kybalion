@@ -1,17 +1,20 @@
 import { useBook } from '../api/library'
+import { BookEmblem } from '../components/common/BookEmblem'
 import { Reveal } from '../components/common/Reveal'
 import { TextSkeleton } from '../components/common/states'
-import { Sigil } from '../components/common/Sigil'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useActiveBook } from '../stores/appStore'
 
 export function AboutPage() {
   useDocumentTitle('About the Text')
   const { data: book, isLoading } = useBook()
+  const activeBook = useActiveBook()
+  const hermetic = activeBook.hasPrinciples
 
   return (
     <div className="mx-auto max-w-2xl px-5 sm:px-8 py-12 lg:py-16">
       <header className="text-center">
-        <Sigil size={64} className="text-gold-500 mx-auto" />
+        <BookEmblem bookSlug={activeBook.slug} size={64} className="text-gold-500 mx-auto" />
         <h1 className="mt-6 font-display font-light text-3xl text-parchment-100">About the Text</h1>
       </header>
 
@@ -29,9 +32,9 @@ export function AboutPage() {
               <dt className="text-parchment-500">Title</dt>
               <dd className="text-parchment-200 italic font-serif">{book?.title}</dd>
               <dt className="text-parchment-500">Attributed to</dt>
-              <dd className="text-parchment-200">{book?.author_attribution}</dd>
+              <dd className="text-parchment-200">{book?.author_attribution || '—'}</dd>
               <dt className="text-parchment-500">First published</dt>
-              <dd className="text-parchment-200">{book?.published_year}</dd>
+              <dd className="text-parchment-200">{book?.published_year || '—'}</dd>
               <dt className="text-parchment-500">Copyright status</dt>
               <dd className="text-parchment-200">
                 {book?.is_public_domain ? 'Public domain' : 'See edition notes'}
@@ -58,33 +61,62 @@ export function AboutPage() {
           <Reveal>
           <section>
             <h2 className="caps-label text-gold-400">What is original, what is added</h2>
-            <p className="editorial-body mt-3">
-              The original 1908 text is always set in serif type on the reading surface. Everything
-              else — plain-English explanations, interpretations, definitions, examples, and
-              visualisations — is modern editorial material, visibly separated and labelled by
-              type. Machine-generated commentary, where present, carries an explicit “AI” label
-              with its model and review status. Nothing modern is ever mixed into the original
-              text.
-            </p>
-            <p className="editorial-body mt-3">
-              The reading text of chapters I–XV is loaded verbatim from the public-domain Project
-              Gutenberg transcription of the 1908 edition. Should any paragraph ever carry a{' '}
-              <span className="text-gold-300">placeholder</span> badge, it means that passage is
-              awaiting verified text and is not a quotation.
-            </p>
+            {hermetic ? (
+              <>
+                <p className="editorial-body mt-3">
+                  The original 1908 text is always set in serif type on the reading surface.
+                  Everything else — plain-English explanations, interpretations, definitions,
+                  examples, and visualisations — is modern editorial material, visibly separated
+                  and labelled by type. Machine-generated commentary, where present, carries an
+                  explicit “AI” label with its model and review status. Nothing modern is ever
+                  mixed into the original text.
+                </p>
+                <p className="editorial-body mt-3">
+                  The reading text of chapters I–XV is loaded verbatim from the public-domain
+                  Project Gutenberg transcription of the 1908 edition. Should any paragraph ever
+                  carry a <span className="text-gold-300">placeholder</span> badge, it means that
+                  passage is awaiting verified text and is not a quotation.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="editorial-body mt-3">
+                  The scripture itself is always set in serif type on the reading surface, loaded
+                  verbatim from the public-domain and freely licensed translations listed above.
+                  Editorial notes — such as the note on the translation of 1 Meqabyan — are
+                  visibly separated and labelled, never mixed into the text.
+                </p>
+                <p className="editorial-body mt-3">
+                  A handful of books of the broader canon have no free English translation yet;
+                  they appear in the canon list with a{' '}
+                  <span className="text-gold-300">placeholder</span> notice rather than silently
+                  missing, and will fill in as verified texts become available.
+                </p>
+              </>
+            )}
           </section>
           </Reveal>
 
           <Reveal>
           <section>
             <h2 className="caps-label text-gold-400">A note on interpretation</h2>
-            <p className="editorial-body mt-3">
-              This edition treats The Kybalion as a historical philosophical document worth
-              studying, questioning, and testing against experience — not as unquestionable truth.
-              The commentary deliberately includes sceptical readings and common criticisms
-              alongside sympathetic ones, and makes no medical, scientific, or financial claims on
-              the text's behalf.
-            </p>
+            {hermetic ? (
+              <p className="editorial-body mt-3">
+                This edition treats The Kybalion as a historical philosophical document worth
+                studying, questioning, and testing against experience — not as unquestionable
+                truth. The commentary deliberately includes sceptical readings and common
+                criticisms alongside sympathetic ones, and makes no medical, scientific, or
+                financial claims on the text's behalf.
+              </p>
+            ) : (
+              <p className="editorial-body mt-3">
+                This edition presents the broader canon of the Ethiopian Orthodox Tewahedo Church
+                as a body of scripture and world literature of immense historical significance.
+                It assembles multiple translators and eras — noted honestly, edition by edition —
+                and is offered for study and devotion alike, without editorial judgement between
+                traditions.
+              </p>
+            )}
           </section>
           </Reveal>
         </div>

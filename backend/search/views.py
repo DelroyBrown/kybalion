@@ -25,10 +25,11 @@ class SearchView(views.APIView):
             t.strip() for t in (request.query_params.get("types") or "").split(",") if t.strip()
         }
         exact = request.query_params.get("exact") == "true"
+        book = request.query_params.get("book")
         chapter = request.query_params.get("chapter")
         principle = request.query_params.get("principle")
 
-        results = search_public(query, chapter=chapter, principle=principle, exact=exact)
+        results = search_public(query, book=book, chapter=chapter, principle=principle, exact=exact)
         if request.user.is_authenticated:
             results.update(search_private(query, request.user, exact=exact))
             self._record_recent(request.user, query)

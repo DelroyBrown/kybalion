@@ -1,16 +1,21 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { NavLink } from 'react-router-dom'
-import { LogIn, Menu, UserRound, X } from 'lucide-react'
+import { LogIn, Menu, Moon, Sun, UserRound, X } from 'lucide-react'
 
+import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useUiStore } from '../../stores/uiStore'
 import { cn } from '../../utils/cn'
-import { MOBILE_BAR_ITEMS, NAV_ITEMS } from './navItems'
+import { BookSwitcher } from './BookSwitcher'
+import { useNavItems } from './navItems'
 
 /** Mobile: a four-item bottom bar plus a slide-up sheet with everything. */
 export function MobileNav() {
   const { mobileMenuOpen, setMobileMenuOpen } = useUiStore()
   const user = useAuthStore((state) => state.user)
+  const { items, barItems } = useNavItems()
+  const colorMode = useAppStore((state) => state.colorMode)
+  const toggleColorMode = useAppStore((state) => state.toggleColorMode)
 
   return (
     <>
@@ -19,7 +24,7 @@ export function MobileNav() {
         className="fixed inset-x-0 bottom-0 z-40 lg:hidden bg-ink-900/95 border-t hairline backdrop-blur-sm safe-bottom"
       >
         <div className="flex items-stretch justify-around">
-          {MOBILE_BAR_ITEMS.map(({ to, label, icon: Icon }) => (
+          {barItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -79,8 +84,11 @@ export function MobileNav() {
                   <X size={18} />
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-1 p-4 pt-1">
-                {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+              <div className="mx-4 border hairline rounded-sm">
+                <BookSwitcher expanded onSwitched={() => setMobileMenuOpen(false)} />
+              </div>
+              <div className="grid grid-cols-2 gap-1 p-4 pt-3">
+                {items.map(({ to, label, icon: Icon }) => (
                   <NavLink
                     key={to}
                     to={to}
@@ -96,6 +104,18 @@ export function MobileNav() {
                     {label}
                   </NavLink>
                 ))}
+                <button
+                  type="button"
+                  onClick={toggleColorMode}
+                  className="flex items-center gap-3 rounded-sm px-4 py-3.5 font-sans text-sm text-parchment-300 hover:bg-ink-700/60 text-left"
+                >
+                  {colorMode === 'dark' ? (
+                    <Sun size={17} strokeWidth={1.5} aria-hidden="true" />
+                  ) : (
+                    <Moon size={17} strokeWidth={1.5} aria-hidden="true" />
+                  )}
+                  {colorMode === 'dark' ? 'Light mode' : 'Dark mode'}
+                </button>
                 <NavLink
                   to={user ? '/profile' : '/login'}
                   onClick={() => setMobileMenuOpen(false)}

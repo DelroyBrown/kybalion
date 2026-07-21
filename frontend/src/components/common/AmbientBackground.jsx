@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
+import { useAppStore } from '../../stores/appStore'
 import { useReaderStore } from '../../stores/readerStore'
 
 /**
@@ -14,12 +15,18 @@ export function AmbientBackground() {
   const reducedMotion = usePrefersReducedMotion()
   const ambientEffects = useReaderStore((state) => state.settings.ambientEffects)
   const userReduceMotion = useReaderStore((state) => state.settings.reduceMotion)
+  const activeBookSlug = useAppStore((state) => state.activeBookSlug)
+  const colorMode = useAppStore((state) => state.colorMode)
   const enabled = ambientEffects && !reducedMotion && !userReduceMotion
 
   useEffect(() => {
     if (!enabled) return undefined
     const canvas = canvasRef.current
     const context = canvas.getContext('2d')
+    // Dust takes the book's accent tint (a palette variable on <html>).
+    const accent =
+      getComputedStyle(document.documentElement).getPropertyValue('--gold-300').trim() ||
+      '211 184 120'
     let frame = 0
     let running = true
     let particles = []
@@ -54,7 +61,7 @@ export function AmbientBackground() {
         }
         context.beginPath()
         context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
-        context.fillStyle = `rgba(214, 190, 140, ${particle.alpha})`
+        context.fillStyle = `rgba(${accent.split(' ').join(', ')}, ${particle.alpha})`
         context.fill()
       }
       frame = requestAnimationFrame(draw)
@@ -75,7 +82,7 @@ export function AmbientBackground() {
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [enabled])
+  }, [enabled, activeBookSlug, colorMode])
 
   return (
     <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden">
@@ -84,9 +91,9 @@ export function AmbientBackground() {
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 55% 45% at 30% 12%, rgba(191,160,93,0.05), transparent 70%),' +
+            'radial-gradient(ellipse 55% 45% at 30% 12%, rgb(var(--gold-400) / 0.05), transparent 70%),' +
             'radial-gradient(ellipse 45% 40% at 78% 80%, rgba(106,90,118,0.05), transparent 70%),' +
-            'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(20,17,13,0.4), transparent 100%)',
+            'radial-gradient(ellipse 70% 55% at 50% 50%, rgb(var(--ink-850) / 0.4), transparent 100%)',
         }}
       />
       {enabled && <canvas ref={canvasRef} className="absolute inset-0" />}

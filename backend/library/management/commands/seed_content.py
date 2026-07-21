@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        if options["if_empty"] and Book.objects.exists():
+        if options["if_empty"] and Book.objects.filter(slug=seed_data.BOOK["slug"]).exists():
             self.stdout.write("Content already present — skipping seed (--if-empty).")
             return
         book_text = self._load_book_text()
@@ -90,7 +90,9 @@ class Command(BaseCommand):
     def _wipe_content(self):
         # Order matters: annotations cascade from passages via the book tree,
         # after which the PROTECTed AnnotationType rows can be removed.
-        Book.objects.all().delete()
+        # Scoped to the Kybalion — other books (the Ethiopian Bible) are
+        # seeded and wiped by their own commands.
+        Book.objects.filter(slug=seed_data.BOOK["slug"]).delete()
         VisualisationReference.objects.all().delete()
         AnnotationType.objects.all().delete()
         Definition.objects.all().delete()

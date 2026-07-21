@@ -6,9 +6,116 @@
 /* Ground                                                              */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Palette variables (RGB triplets, consumed by tailwind.config.js).
+ * Four sets: {Kybalion, Ethiopian Bible} × {dark, light}, selected by
+ * data-book / data-mode attributes on <html> (set by ThemeApplier).
+ *
+ * Semantics are constant across sets: ink-950 is the deepest ground and
+ * parchment-100 the principal text — in light mode the values invert so
+ * every component re-skins without changes.
+ */
+
 :root {
   color-scheme: dark;
-  --focus-ring: #bfa05d;
+  /* The Kybalion — warm near-blacks, tarnished gold, aged paper */
+  --ink-950: 10 9 8;
+  --ink-900: 16 14 12;
+  --ink-850: 21 19 16;
+  --ink-800: 26 23 20;
+  --ink-700: 35 31 26;
+  --ink-600: 46 41 33;
+  --ink-500: 59 53 41;
+  --gold-200: 229 207 156;
+  --gold-300: 211 184 120;
+  --gold-400: 191 160 93;
+  --gold-500: 163 135 74;
+  --gold-600: 131 108 60;
+  --gold-700: 99 81 46;
+  --parchment-50: 244 236 221;
+  --parchment-100: 236 226 206;
+  --parchment-200: 221 208 182;
+  --parchment-300: 195 181 150;
+  --parchment-400: 162 149 122;
+  --parchment-500: 131 120 99;
+  --parchment-600: 101 93 78;
+  --focus-ring: rgb(var(--gold-400));
+}
+
+:root[data-mode='light'] {
+  color-scheme: light;
+  /* The Kybalion by daylight — warm creams, deep umber text */
+  --ink-950: 243 236 223;
+  --ink-900: 237 228 211;
+  --ink-850: 230 220 200;
+  --ink-800: 221 210 187;
+  --ink-700: 208 196 169;
+  --ink-600: 191 177 146;
+  --ink-500: 168 154 124;
+  --gold-200: 95 74 21;
+  --gold-300: 111 88 31;
+  --gold-400: 125 101 41;
+  --gold-500: 143 118 53;
+  --gold-600: 164 138 72;
+  --gold-700: 184 158 94;
+  --parchment-50: 30 24 15;
+  --parchment-100: 42 34 20;
+  --parchment-200: 59 50 32;
+  --parchment-300: 84 73 54;
+  --parchment-400: 109 98 80;
+  --parchment-500: 135 123 102;
+  --parchment-600: 156 145 121;
+}
+
+:root[data-book='ethiopian-bible'] {
+  color-scheme: dark;
+  /* The Ethiopian Bible — indigo night, moon-silver, incense violet */
+  --ink-950: 6 7 15;
+  --ink-900: 10 12 22;
+  --ink-850: 14 16 29;
+  --ink-800: 18 21 37;
+  --ink-700: 25 30 50;
+  --ink-600: 35 42 66;
+  --ink-500: 47 56 84;
+  --gold-200: 214 212 239;
+  --gold-300: 184 180 223;
+  --gold-400: 154 148 200;
+  --gold-500: 124 118 172;
+  --gold-600: 95 89 138;
+  --gold-700: 70 66 105;
+  --parchment-50: 238 240 246;
+  --parchment-100: 226 228 238;
+  --parchment-200: 205 208 222;
+  --parchment-300: 174 178 196;
+  --parchment-400: 141 146 166;
+  --parchment-500: 111 116 136;
+  --parchment-600: 86 90 108;
+  --focus-ring: rgb(var(--gold-400));
+}
+
+:root[data-book='ethiopian-bible'][data-mode='light'] {
+  color-scheme: light;
+  /* The Ethiopian Bible by daylight — cool stone, deep indigo text */
+  --ink-950: 236 238 244;
+  --ink-900: 228 231 239;
+  --ink-850: 219 223 233;
+  --ink-800: 208 213 226;
+  --ink-700: 192 198 214;
+  --ink-600: 170 177 196;
+  --ink-500: 143 151 173;
+  --gold-200: 61 58 107;
+  --gold-300: 74 70 128;
+  --gold-400: 87 82 149;
+  --gold-500: 102 96 165;
+  --gold-600: 125 120 182;
+  --gold-700: 150 146 199;
+  --parchment-50: 20 22 31;
+  --parchment-100: 29 32 41;
+  --parchment-200: 43 47 60;
+  --parchment-300: 65 70 89;
+  --parchment-400: 90 96 117;
+  --parchment-500: 117 123 144;
+  --parchment-600: 139 145 164;
 }
 
 html {
@@ -20,11 +127,12 @@ body {
   @apply bg-ink-950 text-parchment-100 font-sans antialiased;
   min-height: 100%;
   overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 ::selection {
-  background: rgba(191, 160, 93, 0.28);
-  color: #f4ecdd;
+  background: rgb(var(--gold-400) / 0.28);
+  color: rgb(var(--parchment-50));
 }
 
 *:focus-visible {
@@ -36,14 +144,14 @@ body {
 /* Quiet scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2e2921 transparent;
+  scrollbar-color: rgb(var(--ink-600)) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #2e2921;
+  background: rgb(var(--ink-600));
   border-radius: 4px;
 }
 *::-webkit-scrollbar-track {
@@ -117,6 +225,42 @@ body {
   --reader-mark: rgba(181, 106, 109, 0.55);
 }
 
+/* The Ethiopian Bible's own surfaces — deep, cool, and mysterious. */
+[data-reader-theme='abyss'] {
+  --reader-bg: #090b14;
+  --reader-surface: #0e111d;
+  --reader-ink: #dfe1ee;
+  --reader-muted: #8b90a8;
+  --reader-faint: #5c6078;
+  --reader-accent: #9a94c8;
+  --reader-rule: rgba(154, 148, 200, 0.16);
+  --reader-mark: rgba(154, 148, 200, 0.55);
+}
+
+[data-reader-theme='sanctum'] {
+  --reader-bg: #100b16;
+  --reader-surface: #16101f;
+  --reader-ink: #e6dfee;
+  --reader-muted: #9a8fac;
+  --reader-faint: #675e78;
+  --reader-accent: #b39ddb;
+  --reader-rule: rgba(179, 157, 219, 0.16);
+  --reader-mark: rgba(179, 157, 219, 0.55);
+}
+
+/* A light reading surface tuned for the Bible's cool palette. */
+[data-reader-theme='vellum'] {
+  color-scheme: light;
+  --reader-bg: #e8e9ef;
+  --reader-surface: #eff0f5;
+  --reader-ink: #23263a;
+  --reader-muted: #5c617a;
+  --reader-faint: #8b8fa6;
+  --reader-accent: #4a4680;
+  --reader-rule: rgba(74, 70, 128, 0.25);
+  --reader-mark: rgba(74, 70, 128, 0.55);
+}
+
 /* ------------------------------------------------------------------ */
 /* Reading text                                                        */
 /* ------------------------------------------------------------------ */
@@ -156,10 +300,14 @@ body {
 .user-highlight-ember { background: rgba(178, 106, 76, 0.22); }
 .user-highlight-violet { background: rgba(131, 113, 143, 0.24); }
 .user-highlight-sage { background: rgba(138, 148, 120, 0.22); }
-[data-reader-theme='parchment'] .user-highlight-gold { background: rgba(163, 135, 74, 0.3); }
-[data-reader-theme='parchment'] .user-highlight-ember { background: rgba(150, 73, 79, 0.24); }
-[data-reader-theme='parchment'] .user-highlight-violet { background: rgba(106, 90, 118, 0.26); }
-[data-reader-theme='parchment'] .user-highlight-sage { background: rgba(111, 122, 96, 0.28); }
+[data-reader-theme='parchment'] .user-highlight-gold,
+[data-reader-theme='vellum'] .user-highlight-gold { background: rgba(163, 135, 74, 0.3); }
+[data-reader-theme='parchment'] .user-highlight-ember,
+[data-reader-theme='vellum'] .user-highlight-ember { background: rgba(150, 73, 79, 0.24); }
+[data-reader-theme='parchment'] .user-highlight-violet,
+[data-reader-theme='vellum'] .user-highlight-violet { background: rgba(106, 90, 118, 0.26); }
+[data-reader-theme='parchment'] .user-highlight-sage,
+[data-reader-theme='vellum'] .user-highlight-sage { background: rgba(111, 122, 96, 0.28); }
 
 /* ------------------------------------------------------------------ */
 /* Shared primitives                                                   */
@@ -170,7 +318,10 @@ body {
 }
 
 .hairline {
-  border-color: rgba(191, 160, 93, 0.14);
+  border-color: rgb(var(--gold-400) / 0.14);
+}
+:root[data-mode='light'] .hairline {
+  border-color: rgb(var(--gold-400) / 0.35);
 }
 
 .editorial-body {

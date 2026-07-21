@@ -7,7 +7,7 @@ DEFAULT_READER_SETTINGS = {
     "fontScale": 1.0,
     "lineHeight": 1.9,
     "width": "comfortable",  # narrow | comfortable | wide
-    "theme": "midnight",  # midnight | obsidian | parchment | sepia | crimson
+    "theme": "midnight",  # midnight | obsidian | parchment | sepia | crimson | abyss | sanctum
     "mode": "guided",  # clean | guided | study | reflection
     "showParagraphNumbers": False,
     "ambientEffects": True,

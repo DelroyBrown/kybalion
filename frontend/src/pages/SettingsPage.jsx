@@ -6,8 +6,10 @@ import { useSavePreferences } from '../api/userData'
 import { Button } from '../components/common/Button'
 import { ReaderControls } from '../components/reader/ReaderControls'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { BOOKS, BOOK_ORDER, useAppStore } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useReaderStore } from '../stores/readerStore'
+import { cn } from '../utils/cn'
 
 export function SettingsPage() {
   useDocumentTitle('Settings')
@@ -17,12 +19,64 @@ export function SettingsPage() {
   const savePreferences = useSavePreferences()
   const exportData = useExportData()
   const [controlsOpen, setControlsOpen] = useState(false)
+  const activeBookSlug = useAppStore((state) => state.activeBookSlug)
+  const setActiveBook = useAppStore((state) => state.setActiveBook)
+  const colorMode = useAppStore((state) => state.colorMode)
+  const setColorMode = useAppStore((state) => state.setColorMode)
 
   return (
     <div className="mx-auto max-w-2xl px-5 sm:px-8 py-12">
       <h1 className="font-display font-light text-3xl text-parchment-100">Settings</h1>
 
       <div className="mt-10 space-y-10">
+        <section>
+          <h2 className="caps-label text-gold-400">Appearance</h2>
+          <p className="editorial-body mt-2 text-parchment-400">
+            The whole interface follows one of two lights, and each book keeps its own colours.
+          </p>
+          <div className="mt-4 flex gap-2" role="radiogroup" aria-label="Colour mode">
+            {[
+              { key: 'dark', label: 'Dark' },
+              { key: 'light', label: 'Light' },
+            ].map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                role="radio"
+                aria-checked={colorMode === option.key}
+                onClick={() => setColorMode(option.key)}
+                className={cn(
+                  'flex-1 border rounded-sm px-2 py-2.5 font-sans text-sm transition-colors',
+                  colorMode === option.key
+                    ? 'border-gold-500 text-gold-200 bg-gold-500/[0.06]'
+                    : 'border-ink-500 text-parchment-400 hover:border-ink-400'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-2" role="radiogroup" aria-label="Open book">
+            {BOOK_ORDER.map((slug) => (
+              <button
+                key={slug}
+                type="button"
+                role="radio"
+                aria-checked={activeBookSlug === slug}
+                onClick={() => setActiveBook(slug)}
+                className={cn(
+                  'flex-1 border rounded-sm px-2 py-2.5 font-sans text-sm transition-colors',
+                  activeBookSlug === slug
+                    ? 'border-gold-500 text-gold-200 bg-gold-500/[0.06]'
+                    : 'border-ink-500 text-parchment-400 hover:border-ink-400'
+                )}
+              >
+                {BOOKS[slug].title}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section>
           <h2 className="caps-label text-gold-400">Reading</h2>
           <p className="editorial-body mt-2 text-parchment-400">

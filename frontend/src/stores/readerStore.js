@@ -20,6 +20,9 @@ export const READER_THEMES = [
   { key: 'parchment', label: 'Parchment' },
   { key: 'sepia', label: 'Deep Sepia' },
   { key: 'crimson', label: 'Low-Light Crimson' },
+  { key: 'abyss', label: 'Abyss' },
+  { key: 'sanctum', label: 'Sanctum' },
+  { key: 'vellum', label: 'Vellum' },
 ]
 
 export const READING_MODES = [

@@ -17,12 +17,14 @@ export function ReadRedirect() {
 
   useEffect(() => {
     if (!book || (authed && progressLoading)) return
+    // Only chapters of the open book count — each book resumes its own place.
+    const bookSlugs = new Set((book.chapters || []).map((c) => c.slug))
     let target = null
     if (authed && serverProgress?.length) {
-      target = serverProgress[0].chapter // ordered by -updated_at
-    } else {
-      const entries = Object.keys(localProgress)
-      if (entries.length > 0) target = entries[0]
+      target = serverProgress.find((p) => bookSlugs.has(p.chapter))?.chapter // ordered by -updated_at
+    }
+    if (!target) {
+      target = Object.keys(localProgress).find((slug) => bookSlugs.has(slug))
     }
     if (!target) target = book.chapters[0]?.slug
     if (target) navigate(`/read/${target}`, { replace: true })

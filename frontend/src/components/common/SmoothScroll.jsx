@@ -25,9 +25,11 @@ export function SmoothScroll() {
 
   useEffect(() => {
     if (!enabled) return undefined
+    // Deliberately slow: a low lerp and damped wheel give the whole app a
+    // weighted, unhurried glide.
     const lenis = new Lenis({
-      lerp: 0.075,
-      wheelMultiplier: 0.9,
+      lerp: 0.045,
+      wheelMultiplier: 0.7,
       smoothWheel: true,
       syncTouch: false,
     })

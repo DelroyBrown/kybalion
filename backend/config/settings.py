@@ -166,6 +166,13 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
 CORS_ALLOW_CREDENTIALS = False
+if DEBUG:
+    # In development the Vite dev server hops ports (5173, 5174, …) when one
+    # is taken — accept any localhost origin so the frontend always connects.
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+    ]
 
 # Production hardening. These activate automatically when DEBUG is off.
 if not DEBUG:

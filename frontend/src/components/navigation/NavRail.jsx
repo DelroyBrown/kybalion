@@ -1,10 +1,11 @@
-import { NavLink, Link } from 'react-router-dom'
-import { LogIn, UserRound } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { LogIn, Moon, Sun, UserRound } from 'lucide-react'
 
+import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { cn } from '../../utils/cn'
-import { Sigil } from '../common/Sigil'
-import { NAV_ITEMS } from './navItems'
+import { BookSwitcher } from './BookSwitcher'
+import { useNavItems } from './navItems'
 
 /**
  * Desktop navigation: a narrow vertical rail that widens on hover or
@@ -13,6 +14,9 @@ import { NAV_ITEMS } from './navItems'
  */
 export function NavRail() {
   const user = useAuthStore((state) => state.user)
+  const { items } = useNavItems()
+  const colorMode = useAppStore((state) => state.colorMode)
+  const toggleColorMode = useAppStore((state) => state.toggleColorMode)
 
   return (
     <nav
@@ -23,19 +27,10 @@ export function NavRail() {
         'bg-ink-900/95 border-r hairline backdrop-blur-sm overflow-hidden'
       )}
     >
-      <Link
-        to="/home"
-        className="flex items-center gap-3 px-4 h-20 shrink-0 text-gold-400 hover:text-gold-300"
-        aria-label="The Kybalion — home"
-      >
-        <Sigil size={34} className="shrink-0" />
-        <span className="caps-label whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200">
-          The Kybalion
-        </span>
-      </Link>
+      <BookSwitcher expanded="group" className="shrink-0" />
 
       <div data-lenis-prevent className="flex-1 overflow-y-auto py-2">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+        {items.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -57,6 +52,21 @@ export function NavRail() {
       </div>
 
       <div className="border-t hairline py-3 shrink-0">
+        <button
+          type="button"
+          onClick={toggleColorMode}
+          className="flex w-full items-center gap-4 px-[1.375rem] py-3 text-sm font-sans whitespace-nowrap text-parchment-400 hover:text-parchment-100"
+          aria-label={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {colorMode === 'dark' ? (
+            <Sun size={17} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
+          ) : (
+            <Moon size={17} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
+          )}
+          <span className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200">
+            {colorMode === 'dark' ? 'Light mode' : 'Dark mode'}
+          </span>
+        </button>
         <NavLink
           to={user ? '/profile' : '/login'}
           className={({ isActive }) =>

@@ -12,11 +12,13 @@ import {
   Settings,
 } from 'lucide-react'
 
-export const NAV_ITEMS = [
+import { useActiveBook } from '../../stores/appStore'
+
+const ALL_ITEMS = [
   { to: '/home', label: 'Home', icon: Home },
   { to: '/read', label: 'Read', icon: BookOpen },
-  { to: '/principles', label: 'The Seven Principles', icon: Compass },
-  { to: '/map', label: 'Knowledge Map', icon: Network },
+  { to: '/principles', label: 'The Seven Principles', icon: Compass, principlesOnly: true },
+  { to: '/map', label: 'Knowledge Map', icon: Network, principlesOnly: true },
   { to: '/search', label: 'Search', icon: Search },
   { to: '/journal', label: 'Journal', icon: Feather },
   { to: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
@@ -26,4 +28,10 @@ export const NAV_ITEMS = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export const MOBILE_BAR_ITEMS = NAV_ITEMS.slice(0, 4)
+/** Navigation for the active book — the Kybalion-specific study features
+ *  (principles, knowledge map) withdraw when another book is open. */
+export function useNavItems() {
+  const book = useActiveBook()
+  const items = ALL_ITEMS.filter((item) => !item.principlesOnly || book.hasPrinciples)
+  return { items, barItems: items.slice(0, 4) }
+}

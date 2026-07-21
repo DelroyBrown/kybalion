@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { LoadingVeil } from '../components/common/states'
 import { SmoothScroll } from '../components/common/SmoothScroll'
+import { ThemeApplier } from '../components/common/ThemeApplier'
 import { AppLayout } from '../layouts/AppLayout'
 import { AboutPage } from '../pages/AboutPage'
 import { BookmarksPage } from '../pages/BookmarksPage'
@@ -30,6 +31,7 @@ const KnowledgeMapPage = lazy(() =>
 export function App() {
   return (
     <>
+      <ThemeApplier />
       <SmoothScroll />
       <Routes>
       <Route path="/" element={<LandingPage />} />

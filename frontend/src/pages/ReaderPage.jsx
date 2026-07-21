@@ -28,6 +28,7 @@ import { PrincipleSymbol } from '../components/principles/PrincipleSymbol'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useIsDesktop } from '../hooks/useMediaQuery'
 import { useReadingProgressTracker } from '../hooks/useReadingProgressTracker'
+import { useActiveBook } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useReaderStore } from '../stores/readerStore'
 import { useUiStore } from '../stores/uiStore'
@@ -46,7 +47,10 @@ export function ReaderPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: chapter, isLoading, isError, error, refetch } = useChapter(chapterSlug)
-  useDocumentTitle(chapter ? `${toRoman(chapter.number)}. ${chapter.title}` : 'Read')
+  const activeBook = useActiveBook()
+  const scripture = activeBook.chapterNumerals !== 'roman'
+  const numeral = (n) => (scripture ? n : toRoman(n))
+  useDocumentTitle(chapter ? (scripture ? chapter.title : `${toRoman(chapter.number)}. ${chapter.title}`) : 'Read')
 
   const settings = useReaderStore((state) => state.settings)
   const { activePassageSlug, openPassage, closePassage, distractionFree, toggleDistractionFree } =
@@ -169,7 +173,7 @@ export function ReaderPage() {
           </IconButton>
           <div className="min-w-0 flex-1 px-2">
             <p className="caps-label truncate" style={{ color: 'var(--reader-muted)' }}>
-              Chapter {toRoman(chapter.number)} · {chapter.title}
+              {activeBook.chapterLabel} {numeral(chapter.number)} · {chapter.title}
             </p>
           </div>
           <IconButton
@@ -185,7 +189,7 @@ export function ReaderPage() {
                 object_id: chapter.slug,
                 chapter_slug: chapter.slug,
                 title: chapter.title,
-                label: `Chapter ${toRoman(chapter.number)}`,
+                label: `${activeBook.chapterLabel} ${numeral(chapter.number)}`,
               })
             }}
           >
@@ -230,7 +234,7 @@ export function ReaderPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.7 }}
           >
-            Chapter {toRoman(chapter.number)}
+            {activeBook.chapterLabel} {numeral(chapter.number)}
           </motion.p>
           <motion.h1
             className="mt-3 font-display font-light text-3xl sm:text-4xl"
@@ -280,6 +284,7 @@ export function ReaderPage() {
                     ref={observeParagraph}
                     paragraph={paragraph}
                     globalOrder={globalOrderById.get(paragraph.id)}
+                    displayNumber={scripture ? paragraph.order || null : undefined}
                     showMarks={showMarks}
                     showNumbers={showNumbers}
                     highlights={highlightsByParagraph.get(paragraph.id) || []}

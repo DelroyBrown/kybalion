@@ -5,10 +5,12 @@ import { ArrowRight, Bookmark, Feather, Network } from 'lucide-react'
 import { useBook } from '../api/library'
 import { usePrinciples, useReflectionPrompts } from '../api/principles'
 import { useBookmarks, useHighlights, useProgress, useProgressSummary } from '../api/userData'
+import { BookEmblem } from '../components/common/BookEmblem'
 import { Reveal } from '../components/common/Reveal'
 import { Sigil } from '../components/common/Sigil'
 import { PrincipleSymbol } from '../components/principles/PrincipleSymbol'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useActiveBook } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 import { accent } from '../utils/accents'
@@ -22,7 +24,9 @@ function dayOfYear() {
 export function HomePage() {
   useDocumentTitle('Home')
   const { data: book } = useBook()
-  const { data: principles } = usePrinciples()
+  const activeBook = useActiveBook()
+  const hermetic = activeBook.hasPrinciples
+  const { data: principles } = usePrinciples({ enabled: hermetic })
   const { data: prompts } = useReflectionPrompts('daily')
   const authed = useAuthStore((state) => Boolean(state.access))
   const { data: serverProgress } = useProgress()
@@ -42,16 +46,20 @@ export function HomePage() {
   }, [prompts])
 
   const continueReading = useMemo(() => {
+    const bookSlugs = new Set((book?.chapters || []).map((c) => c.slug))
     if (authed && serverProgress?.length) {
-      const current = serverProgress.find((p) => !p.completed) || serverProgress[0]
-      return {
-        slug: current.chapter,
-        title: current.chapter_title,
-        number: current.chapter_number,
-        percent: current.percent_complete,
+      const inBook = serverProgress.filter((p) => bookSlugs.has(p.chapter))
+      const current = inBook.find((p) => !p.completed) || inBook[0]
+      if (current) {
+        return {
+          slug: current.chapter,
+          title: current.chapter_title,
+          number: current.chapter_number,
+          percent: current.percent_complete,
+        }
       }
     }
-    const local = Object.entries(localProgress)
+    const local = Object.entries(localProgress).filter(([slug]) => bookSlugs.has(slug))
     if (local.length && book) {
       const [slug, progress] = local.sort((a, b) => (b[1].percent || 0) - (a[1].percent || 0))[0]
       const chapter = book.chapters.find((c) => c.slug === slug)
@@ -73,10 +81,10 @@ export function HomePage() {
         <div>
           <p className="caps-label text-parchment-500">The archive is open</p>
           <h1 className="mt-2 font-display font-light text-3xl sm:text-4xl text-parchment-100">
-            The Kybalion
+            {activeBook.title}
           </h1>
         </div>
-        <Sigil size={44} className="text-gold-500 hidden sm:block" />
+        <BookEmblem bookSlug={activeBook.slug} size={44} className="text-gold-500 hidden sm:block" />
       </header>
 
       <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
@@ -94,7 +102,10 @@ export function HomePage() {
                 className="group lift mt-4 block border hairline rounded-sm p-6 hover:border-gold-600/60"
               >
                 <p className="font-sans text-xs text-parchment-500">
-                  Chapter {toRoman(continueReading.number)}
+                  {activeBook.chapterLabel}{' '}
+                  {activeBook.chapterNumerals === 'roman'
+                    ? toRoman(continueReading.number)
+                    : continueReading.number}
                 </p>
                 <p className="mt-1.5 font-display text-2xl text-parchment-100 group-hover:text-gold-200 transition-colors">
                   {continueReading.title}
@@ -118,10 +129,12 @@ export function HomePage() {
                 className="group mt-4 block border hairline rounded-sm p-6 hover:border-gold-600/60 transition-colors"
               >
                 <p className="font-display text-2xl text-parchment-100 group-hover:text-gold-200 transition-colors">
-                  Chapter I — The Hermetic Philosophy
+                  {hermetic ? 'Chapter I — The Hermetic Philosophy' : 'Genesis — In the beginning'}
                 </p>
                 <p className="editorial-body mt-2 text-parchment-400">
-                  Enter the text where the tradition itself begins: with readiness, and with keys.
+                  {hermetic
+                    ? 'Enter the text where the tradition itself begins: with readiness, and with keys.'
+                    : 'Open the broadest canon in Christendom at its first words.'}
                 </p>
               </Link>
             )}
@@ -129,7 +142,7 @@ export function HomePage() {
           </Reveal>
 
           {/* Daily passage */}
-          {featured && (
+          {hermetic && featured && (
             <Reveal delay={0.1}>
             <section aria-labelledby="passage-heading" className="border-l-2 pl-6" style={{ borderColor: featuredAccent.hex }}>
               <h2 id="passage-heading" className="caps-label text-parchment-500">
@@ -152,7 +165,7 @@ export function HomePage() {
           )}
 
           {/* Featured principle */}
-          {featured && (
+          {hermetic && featured && (
             <Reveal delay={0.15}>
             <section aria-labelledby="principle-heading">
               <h2 id="principle-heading" className="caps-label text-gold-400">
@@ -198,24 +211,48 @@ export function HomePage() {
           </section>
           </Reveal>
 
-          {/* Knowledge map preview */}
-          <Reveal delay={0.25}>
-          <section aria-labelledby="map-heading">
-            <h2 id="map-heading" className="caps-label text-parchment-500 flex items-center gap-2">
-              <Network size={13} aria-hidden="true" /> Knowledge map
-            </h2>
-            <Link
-              to="/map"
-              className="group lift mt-3 flex items-center justify-center border hairline rounded-sm py-8 hover:border-gold-600/60"
-            >
-              <Sigil size={88} className="text-ink-500 group-hover:text-gold-600 transition-colors" />
-              <span className="sr-only">Open the knowledge map</span>
-            </Link>
-            <p className="editorial-body mt-2 text-parchment-500 text-sm">
-              Seven principles, fifteen chapters, and every connection between them.
-            </p>
-          </section>
-          </Reveal>
+          {/* Knowledge map preview (Kybalion) / Daily psalm (Ethiopian Bible) */}
+          {hermetic ? (
+            <Reveal delay={0.25}>
+            <section aria-labelledby="map-heading">
+              <h2 id="map-heading" className="caps-label text-parchment-500 flex items-center gap-2">
+                <Network size={13} aria-hidden="true" /> Knowledge map
+              </h2>
+              <Link
+                to="/map"
+                className="group lift mt-3 flex items-center justify-center border hairline rounded-sm py-8 hover:border-gold-600/60"
+              >
+                <Sigil size={88} className="text-ink-500 group-hover:text-gold-600 transition-colors" />
+                <span className="sr-only">Open the knowledge map</span>
+              </Link>
+              <p className="editorial-body mt-2 text-parchment-500 text-sm">
+                Seven principles, fifteen chapters, and every connection between them.
+              </p>
+            </section>
+            </Reveal>
+          ) : (
+            <Reveal delay={0.25}>
+            <section aria-labelledby="psalm-heading">
+              <h2 id="psalm-heading" className="caps-label text-parchment-500 flex items-center gap-2">
+                <Network size={13} aria-hidden="true" /> Psalm of the day
+              </h2>
+              <Link
+                to={`/read/eb-psalms#section-s${(dayOfYear() % 150) + 1}`}
+                className="group lift mt-3 flex items-center justify-center border hairline rounded-sm py-8 hover:border-gold-600/60"
+              >
+                <BookEmblem
+                  bookSlug="ethiopian-bible"
+                  size={88}
+                  className="text-ink-500 group-hover:text-gold-600 transition-colors"
+                />
+                <span className="sr-only">Open today's psalm</span>
+              </Link>
+              <p className="editorial-body mt-2 text-parchment-500 text-sm">
+                Psalm {(dayOfYear() % 150) + 1} — one of the hundred and fifty, in its turn.
+              </p>
+            </section>
+            </Reveal>
+          )}
 
           {/* Saved things */}
           {authed && (

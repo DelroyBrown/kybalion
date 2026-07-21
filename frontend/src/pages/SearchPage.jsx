@@ -7,6 +7,7 @@ import { useClearRecentSearches, useRecentSearches, useSearch } from '../api/sea
 import { EmptyState, ErrorState, TextSkeleton } from '../components/common/states'
 import { useDebounce } from '../hooks/useDebounce'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useAppStore } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { cn } from '../utils/cn'
 import { toRoman } from '../utils/format'
@@ -80,9 +81,11 @@ export function SearchPage() {
 
   const authed = useAuthStore((state) => Boolean(state.access))
   const { data: book } = useBook()
+  const activeBookSlug = useAppStore((state) => state.activeBookSlug)
   const { data, isFetching, isError, error, refetch } = useSearch({
     query,
     types: activeTypes,
+    book: activeBookSlug,
     chapter: chapter || undefined,
     exact,
   })
@@ -112,9 +115,16 @@ export function SearchPage() {
 
   const recents = authed ? (serverRecents || []).map((r) => r.query) : localRecents
   const results = data?.results || {}
+  // Principles and their glossary belong to the Kybalion's study layer.
+  const hermetic = activeBookSlug === 'the-kybalion'
   const visibleGroups = useMemo(
-    () => GROUPS.filter((group) => (results[group.key] || []).length > 0),
-    [results]
+    () =>
+      GROUPS.filter(
+        (group) =>
+          (results[group.key] || []).length > 0 &&
+          (hermetic || !['principles', 'definitions'].includes(group.key))
+      ),
+    [results, hermetic]
   )
 
   const toggleType = (key) =>

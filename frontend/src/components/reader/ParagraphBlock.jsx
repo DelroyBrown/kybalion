@@ -15,6 +15,7 @@ export const ParagraphBlock = forwardRef(function ParagraphBlock(
   {
     paragraph,
     globalOrder,
+    displayNumber, // overrides globalOrder in the margin (verse numbers)
     showMarks,
     showNumbers,
     highlights = [],
@@ -100,13 +101,13 @@ export const ParagraphBlock = forwardRef(function ParagraphBlock(
       className={cn('relative group', isEditorial && 'my-6')}
       {...revealProps}
     >
-      {showNumbers && (
+      {showNumbers && (displayNumber ?? globalOrder) != null && (
         <span
           className="absolute -left-10 top-1 hidden sm:block font-sans text-[0.6875rem] select-none"
           style={{ color: 'var(--reader-faint)' }}
           aria-hidden="true"
         >
-          {globalOrder}
+          {displayNumber ?? globalOrder}
         </span>
       )}
 
@@ -115,7 +116,7 @@ export const ParagraphBlock = forwardRef(function ParagraphBlock(
           className="mb-1.5 inline-block font-sans text-[0.625rem] tracking-caps uppercase rounded-sm border px-1.5 py-0.5"
           style={{ color: 'var(--reader-faint)', borderColor: 'var(--reader-rule)' }}
         >
-          Placeholder — awaiting verified 1908 text
+          Placeholder — awaiting the verified text
         </span>
       )}
 

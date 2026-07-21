@@ -63,12 +63,14 @@ def _chapter_of(paragraph):
     return {"slug": chapter.slug, "number": chapter.number, "title": chapter.title}
 
 
-def search_public(query, *, chapter=None, principle=None, exact=False):
+def search_public(query, *, book=None, chapter=None, principle=None, exact=False):
     results = {}
 
     paragraphs = Paragraph.objects.filter(section__chapter__is_published=True).select_related(
         "section__chapter"
     )
+    if book:
+        paragraphs = paragraphs.filter(section__chapter__book__slug=book)
     if chapter:
         paragraphs = paragraphs.filter(section__chapter__slug=chapter)
     if principle:
@@ -86,6 +88,8 @@ def search_public(query, *, chapter=None, principle=None, exact=False):
     ]
 
     chapters = Chapter.objects.filter(is_published=True)
+    if book:
+        chapters = chapters.filter(book__slug=book)
     results["chapters"] = [
         {"type": "chapter", "slug": c.slug, "number": c.number, "title": c.title, "subtitle": c.subtitle}
         for c in _search(chapters, ["title", "subtitle", "introduction", "summary"], query, exact)[:MAX_PER_GROUP]
@@ -105,6 +109,8 @@ def search_public(query, *, chapter=None, principle=None, exact=False):
     annotations = Annotation.objects.filter(status=Annotation.Status.PUBLISHED).select_related(
         "annotation_type", "passage__paragraph__section__chapter"
     )
+    if book:
+        annotations = annotations.filter(passage__paragraph__section__chapter__book__slug=book)
     if chapter:
         annotations = annotations.filter(passage__paragraph__section__chapter__slug=chapter)
     results["annotations"] = [

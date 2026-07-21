@@ -18,6 +18,9 @@ const THEME_SWATCHES = {
   parchment: '#e9dfc9',
   sepia: '#221a10',
   crimson: '#170f10',
+  abyss: '#090b14',
+  sanctum: '#100b16',
+  vellum: '#e8e9ef',
 }
 
 function SettingRow({ label, children }) {
@@ -140,7 +143,7 @@ export function ReaderControls({ open, onClose }) {
       </SettingRow>
 
       <SettingRow label="Theme">
-        <div className="flex gap-3" role="radiogroup" aria-label="Reading theme">
+        <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Reading theme">
           {READER_THEMES.map((theme) => (
             <button
               key={theme.key}

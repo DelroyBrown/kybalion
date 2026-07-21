@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 
 import { api } from './client'
 
-export function usePrinciples() {
+export function usePrinciples({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['principles'],
     queryFn: () => api('/principles/'),
     staleTime: 10 * 60 * 1000,
+    enabled,
   })
 }
 

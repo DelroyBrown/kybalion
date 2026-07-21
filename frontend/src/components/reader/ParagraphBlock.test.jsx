@@ -73,7 +73,7 @@ describe('ParagraphBlock', () => {
         onOpenPassage={() => {}}
       />
     )
-    expect(screen.getByText(/Placeholder — awaiting verified/)).toBeInTheDocument()
+    expect(screen.getByText(/Placeholder — awaiting the verified/)).toBeInTheDocument()
   })
 
   it('renders user highlights as tinted spans', () => {

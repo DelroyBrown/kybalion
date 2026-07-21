@@ -3,14 +3,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/authStore'
 import { api } from './client'
 
-export function useSearch({ query, types, chapter, principle, exact }) {
+export function useSearch({ query, types, book, chapter, principle, exact }) {
   return useQuery({
-    queryKey: ['search', { query, types, chapter, principle, exact }],
+    queryKey: ['search', { query, types, book, chapter, principle, exact }],
     queryFn: () =>
       api('/search/', {
         params: {
           q: query,
           types: types?.length ? types.join(',') : undefined,
+          book,
           chapter,
           principle,
           exact: exact ? 'true' : undefined,
