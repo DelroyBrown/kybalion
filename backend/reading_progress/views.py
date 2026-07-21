@@ -62,6 +62,16 @@ class ReadingProgressViewSet(viewsets.ModelViewSet):
             merged += 1
         return Response({"merged": merged})
 
+    @action(detail=False, methods=["post"])
+    def reset(self, request):
+        """Forget every saved reading position, so the reader starts afresh.
+
+        Reading sessions are left alone — they are a record of time spent,
+        not a place in the text.
+        """
+        deleted, _ = self.get_queryset().delete()
+        return Response({"cleared": deleted})
+
     @action(detail=False, methods=["get"])
     def summary(self, request):
         progress = self.get_queryset()

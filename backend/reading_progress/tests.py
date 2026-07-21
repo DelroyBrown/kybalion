@@ -58,6 +58,29 @@ class ReadingProgressTests(TestCase):
         summary = self.client.get("/api/me/progress/summary/")
         self.assertEqual(summary.data["total_reading_seconds"], 600)
 
+    def test_reset_clears_positions_but_keeps_sessions(self):
+        self.client.post("/api/me/progress/", {
+            "chapter": "chapter-one", "percent_complete": 60.0,
+        }, format="json")
+        self.client.post("/api/me/progress/sessions/", {
+            "chapter": "chapter-one", "started_at": "2026-07-16T20:00:00Z", "duration_seconds": 600,
+        }, format="json")
+
+        response = self.client.post("/api/me/progress/reset/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(self.client.get("/api/me/progress/").data), 0)
+        summary = self.client.get("/api/me/progress/summary/")
+        self.assertEqual(summary.data["overall_percent"], 0.0)
+        self.assertEqual(summary.data["total_reading_seconds"], 600)
+
+    def test_reset_leaves_other_readers_alone(self):
+        self.client.post("/api/me/progress/", {"chapter": "chapter-one", "percent_complete": 40.0}, format="json")
+        other = auth_client(create_user("other"))
+        other.post("/api/me/progress/", {"chapter": "chapter-one", "percent_complete": 70.0}, format="json")
+
+        self.client.post("/api/me/progress/reset/")
+        self.assertEqual(len(other.get("/api/me/progress/").data), 1)
+
     def test_ownership_isolated(self):
         self.client.post("/api/me/progress/", {"chapter": "chapter-one", "percent_complete": 40.0}, format="json")
         intruder = auth_client(create_user("intruder"))

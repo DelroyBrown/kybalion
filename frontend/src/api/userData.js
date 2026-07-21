@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuthStore } from '../stores/authStore'
+import { useLocalProgressStore } from '../stores/localProgressStore'
 import { api } from './client'
 
 function useAuthed() {
@@ -197,6 +198,26 @@ export function useSaveProgress() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload) => api('/me/progress/', { method: 'POST', body: payload, keepalive: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['progress'] })
+      queryClient.invalidateQueries({ queryKey: ['progress-summary'] })
+    },
+  })
+}
+
+/**
+ * Forget every saved reading position — on the server for signed-in
+ * readers, and always on this device. "Continue reading" starts over.
+ */
+export function useResetProgress() {
+  const queryClient = useQueryClient()
+  const authed = useAuthed()
+  return useMutation({
+    mutationFn: async () => {
+      if (authed) await api('/me/progress/reset/', { method: 'POST' })
+      useLocalProgressStore.getState().clear()
+      return true
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['progress'] })
       queryClient.invalidateQueries({ queryKey: ['progress-summary'] })

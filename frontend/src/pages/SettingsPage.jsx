@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useExportData } from '../api/auth'
-import { useSavePreferences } from '../api/userData'
+import { useResetProgress, useSavePreferences } from '../api/userData'
 import { Button } from '../components/common/Button'
 import { ReaderControls } from '../components/reader/ReaderControls'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
@@ -18,7 +18,9 @@ export function SettingsPage() {
   const setSetting = useReaderStore((state) => state.setSetting)
   const savePreferences = useSavePreferences()
   const exportData = useExportData()
+  const resetProgress = useResetProgress()
   const [controlsOpen, setControlsOpen] = useState(false)
+  const [confirmingReset, setConfirmingReset] = useState(false)
   const activeBookSlug = useAppStore((state) => state.activeBookSlug)
   const setActiveBook = useAppStore((state) => state.setActiveBook)
   const colorMode = useAppStore((state) => state.colorMode)
@@ -86,6 +88,55 @@ export function SettingsPage() {
           <Button variant="outline" className="mt-4" onClick={() => setControlsOpen(true)}>
             Open reading settings
           </Button>
+        </section>
+
+        <section>
+          <h2 className="caps-label text-gold-400">Reading position</h2>
+          <p className="editorial-body mt-2 text-parchment-400">
+            The reader remembers where you stopped in every chapter and returns you there.
+            Clearing it starts the whole library over: “Continue reading” offers the first
+            chapter again and each book opens at its beginning.
+            {authed
+              ? ' This clears your saved positions on every device. Time spent reading is kept.'
+              : ' This clears the positions saved on this device.'}
+          </p>
+          {resetProgress.isSuccess && !confirmingReset ? (
+            <p className="mt-4 font-sans text-sm text-gold-300" role="status">
+              Your reading positions have been cleared.
+            </p>
+          ) : confirmingReset ? (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button
+                variant="danger"
+                onClick={() => {
+                  resetProgress.mutate()
+                  setConfirmingReset(false)
+                }}
+                disabled={resetProgress.isPending}
+              >
+                {resetProgress.isPending ? 'Clearing…' : 'Yes, forget my place'}
+              </Button>
+              <Button variant="ghost" onClick={() => setConfirmingReset(false)}>
+                Keep it
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => {
+                resetProgress.reset()
+                setConfirmingReset(true)
+              }}
+            >
+              Reset reading position
+            </Button>
+          )}
+          {resetProgress.isError && (
+            <p className="mt-3 font-sans text-sm text-crimson-300" role="alert">
+              The positions could not be cleared. Please try again.
+            </p>
+          )}
         </section>
 
         <section>

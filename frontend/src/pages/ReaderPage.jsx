@@ -18,6 +18,7 @@ import { useBookmarks, useHighlights, useProgress, useToggleBookmark } from '../
 import { AnnotationPanel } from '../components/annotations/AnnotationPanel'
 import { IconButton } from '../components/common/Button'
 import { Reveal, useRevealAllowed } from '../components/common/Reveal'
+import { scrollToY } from '../components/common/SmoothScroll'
 import { ErrorState, LoadingVeil } from '../components/common/states'
 import { ChapterNavPanel } from '../components/reader/ChapterNavPanel'
 import { HoverPreview } from '../components/reader/HoverPreview'
@@ -59,10 +60,9 @@ const SCROLL_ANCHOR_OFFSET = 88
  */
 function anchorScrollTo(element) {
   if (!element) return false
-  element.scrollIntoView()
+  scrollToY(element.getBoundingClientRect().top + window.scrollY - SCROLL_ANCHOR_OFFSET)
   requestAnimationFrame(() => {
-    const top = element.getBoundingClientRect().top + window.scrollY - SCROLL_ANCHOR_OFFSET
-    window.scrollTo(0, Math.max(0, top))
+    scrollToY(element.getBoundingClientRect().top + window.scrollY - SCROLL_ANCHOR_OFFSET)
   })
   return true
 }
@@ -198,7 +198,7 @@ export function ReaderPage() {
   }, [searchParams, chapter, openPassage, setSearchParams])
 
   useEffect(() => () => closePassage(), [chapterSlug, closePassage])
-  useEffect(() => window.scrollTo({ top: 0 }), [chapterSlug])
+  useEffect(() => scrollToY(0), [chapterSlug])
   // Leaving the reader always restores the surrounding interface.
   useEffect(() => () => useUiStore.setState({ distractionFree: false }), [])
 
