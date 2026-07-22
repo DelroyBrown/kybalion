@@ -13,6 +13,33 @@ The ideas belong to whoever finds truth in them.
 
 ---
 
+## Manifesto
+
+This book is an attempt to observe life honestly.
+
+It does not seek followers.
+It does not ask for belief.
+It offers observations that have survived reflection.
+
+Every sentence must earn its place.
+Every verse must be simple enough to remember and deep enough to revisit.
+
+If a thought is merely clever, it does not belong here.
+If a thought is true, it will remain true whether it is popular or forgotten.
+
+This book is never finished.
+As understanding grows, so may the words.
+Truth is not protected by pride.
+Better words replace weaker ones.
+
+Read slowly.
+Question everything.
+Keep only what proves itself in your own life.
+
+**Write what is true. Remove what is not.**
+
+---
+
 ## Principles
 
 Every verse must:
