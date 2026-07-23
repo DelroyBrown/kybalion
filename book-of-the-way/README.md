@@ -93,6 +93,10 @@ Some remain seeds for months or years before becoming verses.
 
 5. Many spend their lives preparing for tomorrow, forgetting that life is happening today.
 
+6. Many sell their time to survive, yet never discover what they would gladly give it away for.
+
+7. Many postpone the life they want, believing time is waiting with them.
+
 ---
 
 ## Motto
