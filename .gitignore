@@ -23,6 +23,10 @@ frontend/.env.local
 .DS_Store
 Thumbs.db
 
+# The Crisis raw OCR downloads (regenerate with scripts/download_crisis.py)
+sources/crisis/raw/
+sources/crisis/hocr/
+
 # Django #
 *.log
 *.pot

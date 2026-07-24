@@ -22,6 +22,8 @@ const THEME_SWATCHES = {
   abyss: '#090b14',
   sanctum: '#100b16',
   vellum: '#e8e9ef',
+  gazette: '#e7ddc4',
+  pressroom: '#171310',
 }
 
 function SettingRow({ label, children }) {
@@ -66,7 +68,7 @@ export function ReaderControls({ open, onClose }) {
   const { settings, setSetting, resetSettings } = useReaderStore()
   const authed = useAuthStore((state) => Boolean(state.access))
   const savePreferences = useSavePreferences()
-  const scripture = useActiveBook().chapterNumerals !== 'roman'
+  const scripture = useActiveBook().kind === 'scripture'
 
   const close = () => {
     if (authed) savePreferences.mutate(settings)

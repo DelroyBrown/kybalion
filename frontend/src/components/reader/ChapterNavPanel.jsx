@@ -22,7 +22,8 @@ export function ChapterNavPanel({ open, onClose, currentSlug }) {
   const authed = useAuthStore((state) => Boolean(state.access))
   const { data: serverProgress } = useProgress()
   const localProgress = useLocalProgressStore((state) => state.byChapter)
-  const scripture = activeBook.chapterNumerals !== 'roman'
+  const scripture = activeBook.kind === 'scripture'
+  const periodical = activeBook.kind === 'periodical'
 
   const progressFor = (slug) => {
     if (authed && serverProgress) {
@@ -33,10 +34,15 @@ export function ChapterNavPanel({ open, onClose, currentSlug }) {
     return local ? { percent: local.percent, completed: local.completed } : null
   }
 
-  // Consecutive chapters sharing a subtitle form a titled group.
+  // Consecutive chapters sharing a subtitle form a titled group; a
+  // periodical's issues gather under their year (from crisis-YYYY-MM slugs).
   const groups = []
   for (const chapter of book?.chapters || []) {
-    const heading = scripture ? chapter.subtitle : null
+    const heading = periodical
+      ? chapter.slug.split('-')[1] || null
+      : scripture
+        ? chapter.subtitle
+        : null
     const last = groups[groups.length - 1]
     if (last && last.heading === heading) last.chapters.push(chapter)
     else groups.push({ heading, chapters: [chapter] })
@@ -55,7 +61,7 @@ export function ChapterNavPanel({ open, onClose, currentSlug }) {
             aria-hidden="true"
           />
           <motion.nav
-            aria-label={scripture ? 'Books' : 'Chapters'}
+            aria-label={periodical ? 'Issues' : scripture ? 'Books' : 'Chapters'}
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
@@ -65,7 +71,9 @@ export function ChapterNavPanel({ open, onClose, currentSlug }) {
             onKeyDown={(event) => event.key === 'Escape' && onClose()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b hairline sticky top-0 bg-ink-900 z-10">
-              <h2 className="caps-label text-gold-300">{scripture ? 'The Books' : 'Chapters'}</h2>
+              <h2 className="caps-label text-gold-300">
+                {periodical ? 'The Issues' : scripture ? 'The Books' : 'Chapters'}
+              </h2>
               <IconButton label="Close chapter list" onClick={onClose}>
                 <X size={16} />
               </IconButton>
@@ -93,9 +101,15 @@ export function ChapterNavPanel({ open, onClose, currentSlug }) {
                           )}
                         >
                           <span className="font-display text-sm w-8 shrink-0 text-parchment-500">
-                            {scripture ? chapter.number : toRoman(chapter.number)}
+                            {periodical
+                              ? chapter.title.split(' ')[0].slice(0, 3)
+                              : scripture
+                                ? chapter.number
+                                : toRoman(chapter.number)}
                           </span>
-                          <span className="font-serif text-[0.9375rem] leading-snug flex-1">{chapter.title}</span>
+                          <span className="font-serif text-[0.9375rem] leading-snug flex-1">
+                            {periodical ? chapter.subtitle || chapter.title : chapter.title}
+                          </span>
                           {progress?.completed ? (
                             <Check size={13} className="text-gold-400 shrink-0" aria-label="Completed" />
                           ) : progress?.percent > 0 ? (

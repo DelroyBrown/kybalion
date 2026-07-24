@@ -4,13 +4,16 @@ import { useNavigate } from 'react-router-dom'
 import { useBook } from '../api/library'
 import { useProgress } from '../api/userData'
 import { LoadingVeil } from '../components/common/states'
+import { useActiveBook } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 
-/** /read → the most recently read chapter, or the first chapter. */
+/** /read → the most recently read chapter, or the first chapter. A
+ *  periodical opened fresh goes to its archive to pick an issue. */
 export function ReadRedirect() {
   const navigate = useNavigate()
   const { data: book } = useBook()
+  const activeBook = useActiveBook()
   const authed = useAuthStore((state) => Boolean(state.access))
   const { data: serverProgress, isLoading: progressLoading } = useProgress()
   const localProgress = useLocalProgressStore((state) => state.byChapter)
@@ -29,9 +32,14 @@ export function ReadRedirect() {
         target = entries.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0))[0][0]
       }
     }
+    if (!target && activeBook.kind === 'periodical') {
+      // Nothing begun yet: the archive is the way into a periodical.
+      navigate('/crisis', { replace: true })
+      return
+    }
     if (!target) target = book.chapters[0]?.slug
     if (target) navigate(`/read/${target}`, { replace: true })
-  }, [book, authed, serverProgress, progressLoading, localProgress, navigate])
+  }, [book, activeBook, authed, serverProgress, progressLoading, localProgress, navigate])
 
   return <LoadingVeil label="Finding your place" />
 }

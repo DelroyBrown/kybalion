@@ -86,7 +86,8 @@ class ChapterDetailSerializer(serializers.ModelSerializer):
         model = Chapter
         fields = [
             "slug", "number", "title", "subtitle", "introduction", "summary", "book",
-            "sections", "previous_chapter", "next_chapter", "paragraph_count", "principles",
+            "source_url", "sections", "previous_chapter", "next_chapter",
+            "paragraph_count", "principles",
         ]
 
     def _sibling(self, obj, direction):

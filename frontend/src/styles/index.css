@@ -118,6 +118,59 @@
   --parchment-600: 139 145 164;
 }
 
+:root[data-book='the-crisis'] {
+  color-scheme: dark;
+  /* The Crisis by night — pressroom black, newsprint cream, editorial red */
+  --ink-950: 13 11 9;
+  --ink-900: 19 16 13;
+  --ink-850: 25 21 17;
+  --ink-800: 31 26 21;
+  --ink-700: 42 35 28;
+  --ink-600: 56 47 37;
+  --ink-500: 72 61 48;
+  --gold-200: 231 216 189;
+  --gold-300: 213 193 158;
+  --gold-400: 190 167 128;
+  --gold-500: 161 138 100;
+  --gold-600: 128 108 77;
+  --gold-700: 97 81 58;
+  --parchment-50: 243 236 222;
+  --parchment-100: 234 225 206;
+  --parchment-200: 217 205 182;
+  --parchment-300: 189 176 150;
+  --parchment-400: 156 144 121;
+  --parchment-500: 126 115 96;
+  --parchment-600: 98 89 75;
+  --focus-ring: rgb(var(--gold-400));
+  --crisis-red: 158 58 48;
+}
+
+:root[data-book='the-crisis'][data-mode='light'] {
+  color-scheme: light;
+  /* The Crisis by day — aged newsprint, iron-gall ink, editorial red */
+  --ink-950: 233 224 201;
+  --ink-900: 227 216 191;
+  --ink-850: 220 208 181;
+  --ink-800: 211 198 169;
+  --ink-700: 197 183 152;
+  --ink-600: 178 163 131;
+  --ink-500: 153 138 108;
+  --gold-200: 84 62 26;
+  --gold-300: 102 78 36;
+  --gold-400: 118 92 45;
+  --gold-500: 137 110 60;
+  --gold-600: 158 131 82;
+  --gold-700: 178 152 105;
+  --parchment-50: 26 20 13;
+  --parchment-100: 37 29 19;
+  --parchment-200: 55 45 31;
+  --parchment-300: 80 68 51;
+  --parchment-400: 106 94 76;
+  --parchment-500: 131 119 100;
+  --parchment-600: 153 141 122;
+  --crisis-red: 148 48 40;
+}
+
 html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
@@ -261,6 +314,31 @@ body {
   --reader-mark: rgba(74, 70, 128, 0.55);
 }
 
+/* The Crisis's own surfaces. Gazette: an aged newsprint page, the reading
+   default; Pressroom: the same paper by lamplight in the composing room. */
+[data-reader-theme='gazette'] {
+  color-scheme: light;
+  --reader-bg: #e7ddc4;
+  --reader-surface: #ece3cd;
+  --reader-ink: #241c11;
+  --reader-muted: #5f5236;
+  --reader-faint: #8d7f5f;
+  --reader-accent: #8f2f26;
+  --reader-rule: rgba(56, 44, 24, 0.35);
+  --reader-mark: rgba(143, 47, 38, 0.5);
+}
+
+[data-reader-theme='pressroom'] {
+  --reader-bg: #171310;
+  --reader-surface: #1f1a15;
+  --reader-ink: #e6dcc4;
+  --reader-muted: #a1937a;
+  --reader-faint: #6f6350;
+  --reader-accent: #c96f5f;
+  --reader-rule: rgba(230, 220, 196, 0.22);
+  --reader-mark: rgba(201, 111, 95, 0.5);
+}
+
 /* ------------------------------------------------------------------ */
 /* Reading text                                                        */
 /* ------------------------------------------------------------------ */
@@ -303,6 +381,96 @@ body {
   user-select: none;
   -webkit-user-select: none;
   font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* The Crisis — old-newspaper reading surface                          */
+/* Applied via data-book-style='crisis' on the reader column.          */
+/* ------------------------------------------------------------------ */
+
+[data-book-style='crisis'] .reader-text {
+  font-family: 'Old Standard TT', 'EB Garamond', Georgia, serif;
+  font-size: calc(1.0625rem * var(--reader-font-scale, 1));
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+/* Department heads: display type over a double rule, as the press set it. */
+[data-book-style='crisis'] .reader-text h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: calc(1.5rem * var(--reader-font-scale, 1));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--reader-ink);
+  text-align: center;
+  padding-bottom: 0.55rem;
+  border-bottom: 4px double var(--reader-rule);
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 28rem;
+}
+
+/* Crossheads (kind=epigraph): small centred caps, never italic. */
+[data-book-style='crisis'] .reader-text p.crisis-crosshead {
+  font-family: 'Old Standard TT', Georgia, serif;
+  font-style: normal;
+  font-weight: 700;
+  font-size: calc(0.9375rem * var(--reader-font-scale, 1));
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--reader-ink);
+}
+
+/* Verse keeps its line breaks and sits centred, poem-fashion. */
+[data-book-style='crisis'] .reader-text p.crisis-verse {
+  white-space: pre-line;
+  text-align: left;
+  font-style: normal;
+  border-left: none;
+  padding-left: 0;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+}
+
+/* A drop capital opens each department, as the magazine printed it. */
+[data-book-style='crisis'] .reader-text p.crisis-dropcap::first-letter {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  float: left;
+  font-size: 3.1em;
+  line-height: 0.82;
+  padding: 0.04em 0.09em 0 0;
+  color: var(--reader-accent);
+}
+
+/* Masthead furniture. */
+.crisis-rule {
+  border-top: 1px solid var(--reader-rule);
+}
+.crisis-rule-double {
+  border-top: 4px double var(--reader-rule);
+}
+.crisis-nameplate {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--reader-ink);
+}
+.crisis-deck {
+  font-family: 'Old Standard TT', Georgia, serif;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.crisis-dateline {
+  font-family: 'Old Standard TT', Georgia, serif;
+  font-variant-numeric: oldstyle-nums;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* Inline passage marker: a thin dotted underline, never a glow. */

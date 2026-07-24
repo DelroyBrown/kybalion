@@ -7,6 +7,7 @@ import { ThemeApplier } from '../components/common/ThemeApplier'
 import { AppLayout } from '../layouts/AppLayout'
 import { AboutPage } from '../pages/AboutPage'
 import { BookmarksPage } from '../pages/BookmarksPage'
+import { CrisisArchivePage } from '../pages/CrisisArchivePage'
 import { HighlightsPage } from '../pages/HighlightsPage'
 import { HomePage } from '../pages/HomePage'
 import { JournalPage } from '../pages/JournalPage'
@@ -39,6 +40,7 @@ export function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/read" element={<ReadRedirect />} />
         <Route path="/read/:chapterSlug" element={<ReaderPage />} />
+        <Route path="/crisis" element={<CrisisArchivePage />} />
         <Route path="/principles" element={<PrinciplesPage />} />
         <Route
           path="/principles/:slug"

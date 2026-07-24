@@ -51,6 +51,21 @@ const COVERS = {
     body:
       'The broadest biblical canon in Christendom, assembled in English from public-domain and freely licensed translations — Enoch, Jubilees, and the books of Meqabyan among them.',
   },
+  'the-crisis': {
+    ground: 'rgba(20, 15, 11, 0.82)',
+    edge: 'rgba(190, 167, 128, 0.28)',
+    edgeHover: 'rgba(201, 111, 95, 0.55)',
+    accent: '#d5c19e',
+    accentDim: '#a18a64',
+    text: '#eae1ce',
+    muted: '#9c9079',
+    glow: 'rgba(158, 58, 48, 0.10)',
+    halo: 'rgba(190, 167, 128, 0.2)',
+    quote: '“The object of this publication is to set forth those facts and arguments which show the danger of race prejudice.”',
+    meta: 'Two hundred forty-two issues · 1910–1930 · The NAACP',
+    body:
+      'W. E. B. Du Bois’s Crisis, the magazine of the NAACP — twenty years of news along the color line, fearless editorials, and the poets of the Harlem Renaissance, issue by issue as they went to press.',
+  },
 }
 
 /** A book cover that tilts gently toward the pointer, like a card in hand. */
@@ -162,7 +177,8 @@ export function LandingPage() {
     const slugs = Object.keys(localProgress)
     return {
       'ethiopian-bible': slugs.some((slug) => slug.startsWith('eb-')),
-      'the-kybalion': slugs.some((slug) => !slug.startsWith('eb-')),
+      'the-crisis': slugs.some((slug) => slug.startsWith('crisis-')),
+      'the-kybalion': slugs.some((slug) => !slug.startsWith('eb-') && !slug.startsWith('crisis-')),
     }
   }, [localProgress])
 
@@ -230,7 +246,7 @@ export function LandingPage() {
         >
           Now on the shelf
         </motion.p>
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 w-full max-w-4xl">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8 w-full max-w-4xl xl:max-w-6xl">
           {BOOK_ORDER.map((slug, index) => (
             <CoverCard
               key={slug}

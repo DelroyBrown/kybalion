@@ -21,6 +21,7 @@ import { Reveal, useRevealAllowed } from '../components/common/Reveal'
 import { scrollToY } from '../components/common/SmoothScroll'
 import { ErrorState, LoadingVeil } from '../components/common/states'
 import { ChapterNavPanel } from '../components/reader/ChapterNavPanel'
+import { CrisisMasthead } from '../components/reader/CrisisMasthead'
 import { HoverPreview } from '../components/reader/HoverPreview'
 import { ParagraphBlock } from '../components/reader/ParagraphBlock'
 import { ReaderControls } from '../components/reader/ReaderControls'
@@ -117,9 +118,19 @@ export function ReaderPage() {
   const { data: chapter, isLoading, isError, error, refetch } = useChapter(chapterSlug)
   const activeBook = useActiveBook()
   const setActiveBook = useAppStore((state) => state.setActiveBook)
-  const scripture = activeBook.chapterNumerals !== 'roman'
-  const numeral = (n) => (scripture ? n : toRoman(n))
-  useDocumentTitle(chapter ? (scripture ? chapter.title : `${toRoman(chapter.number)}. ${chapter.title}`) : 'Read')
+  const scripture = activeBook.kind === 'scripture'
+  const periodical = activeBook.kind === 'periodical'
+  const roman = activeBook.chapterNumerals === 'roman'
+  const numeral = (n) => (roman ? toRoman(n) : n)
+  useDocumentTitle(
+    chapter
+      ? periodical
+        ? `${chapter.title} · The Crisis`
+        : roman
+          ? `${toRoman(chapter.number)}. ${chapter.title}`
+          : chapter.title
+      : 'Read'
+  )
 
   const settings = useReaderStore((state) => state.settings)
   // Individual selectors: ui-store churn (text selection, mobile menu) must
@@ -168,7 +179,6 @@ export function ReaderPage() {
     () => new Map(orderedParagraphs.map((paragraph, index) => [paragraph.id, index + 1])),
     [orderedParagraphs]
   )
-  const revealParagraphs = revealAllowed && orderedParagraphs.length <= REVEAL_PARAGRAPH_LIMIT
 
   const { observeParagraph } = useReadingProgressTracker({
     chapterSlug,
@@ -211,6 +221,89 @@ export function ReaderPage() {
   // anonymous readers at the locally saved one.
   const { data: serverProgress, isLoading: serverProgressLoading } = useProgress()
   const localChapterProgress = useLocalProgressStore((state) => state.byChapter[chapterSlug])
+
+  // ---- The Crisis reads one department at a time ------------------- //
+  // ?s=<slug> opens a section, ?s=all lays out the whole issue. With no
+  // parameter, the section holding the saved position (or a ?p target, or
+  // simply the first) opens — so resuming always lands in the right place.
+  const sectionBounds = useMemo(() => {
+    const bounds = new Map()
+    if (!chapter) return bounds
+    let start = 1
+    for (const section of chapter.sections) {
+      bounds.set(section.slug, { start, end: start + section.paragraphs.length - 1 })
+      start += section.paragraphs.length
+    }
+    return bounds
+  }, [chapter])
+
+  const sectionForOrder = useCallback(
+    (order) => {
+      for (const [slug, bound] of sectionBounds) {
+        if (order >= bound.start && order <= bound.end) return slug
+      }
+      return null
+    },
+    [sectionBounds]
+  )
+
+  const sectionParam = searchParams.get('s')
+  const activeSection = useMemo(() => {
+    if (!periodical || !chapter?.sections?.length) return 'all'
+    if (sectionParam === 'all') return 'all'
+    if (sectionParam && chapter.sections.some((section) => section.slug === sectionParam)) {
+      return sectionParam
+    }
+    const explicit = Number(searchParams.get('p'))
+    if (explicit > 0) return sectionForOrder(explicit) || chapter.sections[0].slug
+    const server = authed ? (serverProgress || []).find((p) => p.chapter === chapterSlug) : null
+    const saved = server ? server.last_paragraph_order : localChapterProgress?.lastParagraphOrder || 0
+    if (saved > 1 && saved < orderedParagraphs.length) {
+      return sectionForOrder(saved) || chapter.sections[0].slug
+    }
+    return chapter.sections[0].slug
+  }, [
+    periodical,
+    chapter,
+    sectionParam,
+    searchParams,
+    authed,
+    serverProgress,
+    chapterSlug,
+    localChapterProgress,
+    orderedParagraphs.length,
+    sectionForOrder,
+  ])
+
+  const visibleSections = useMemo(() => {
+    if (!chapter) return []
+    if (!periodical || activeSection === 'all') return chapter.sections
+    return chapter.sections.filter((section) => section.slug === activeSection)
+  }, [chapter, periodical, activeSection])
+
+  const openSection = useCallback(
+    (slug) => setSearchParams(slug ? { s: slug } : {}),
+    [setSearchParams]
+  )
+
+  // Moving between sections lands at the top of the new one; the initial
+  // mount is the position restore's business, not ours.
+  const previousSectionRef = useRef(null)
+  useEffect(() => {
+    if (previousSectionRef.current && previousSectionRef.current !== activeSection) {
+      scrollToY(0)
+    }
+    previousSectionRef.current = activeSection
+  }, [activeSection])
+
+  const sectionIndex = periodical && activeSection !== 'all'
+    ? (chapter?.sections || []).findIndex((section) => section.slug === activeSection)
+    : -1
+  const previousSection = sectionIndex > 0 ? chapter.sections[sectionIndex - 1] : null
+  const nextSection =
+    sectionIndex >= 0 && sectionIndex < (chapter?.sections?.length || 0) - 1
+      ? chapter.sections[sectionIndex + 1]
+      : null
   const restoredChapterRef = useRef(null)
   useEffect(() => {
     if (!chapter) return
@@ -240,6 +333,12 @@ export function ReaderPage() {
     searchParams,
   ])
 
+  const visibleParagraphCount = visibleSections.reduce(
+    (count, section) => count + section.paragraphs.length,
+    0
+  )
+  const revealParagraphs = revealAllowed && visibleParagraphCount <= REVEAL_PARAGRAPH_LIMIT
+
   const onPassageHover = useCallback((passage, element) => {
     if (!passage || !element) {
       setHoverPreview(null)
@@ -253,7 +352,10 @@ export function ReaderPage() {
     })
   }, [])
 
-  if (isLoading) return <LoadingVeil label="Opening the chapter" />
+  // A periodical also waits for saved progress, so the right section opens.
+  if (isLoading || (periodical && authed && serverProgressLoading)) {
+    return <LoadingVeil label={periodical ? 'Opening the issue' : 'Opening the chapter'} />
+  }
   if (isError) {
     return (
       <ErrorState
@@ -268,7 +370,11 @@ export function ReaderPage() {
   const panelOffset = activePassageSlug && isDesktop ? 'xl:mr-[26rem]' : ''
 
   return (
-    <div data-reader-theme={settings.theme} className="min-h-dvh transition-colors duration-300">
+    <div
+      data-reader-theme={settings.theme}
+      data-book-style={periodical ? 'crisis' : undefined}
+      className="min-h-dvh transition-colors duration-300"
+    >
       {/* Sticky, quiet header */}
       <header
         className="sticky top-0 z-30 backdrop-blur-sm border-b"
@@ -312,6 +418,56 @@ export function ReaderPage() {
             {distractionFree ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </IconButton>
         </div>
+        {/* The issue's departments, always one tap away. */}
+        {periodical && chapter.sections.length > 1 && (
+          <nav
+            aria-label="Sections of this issue"
+            className="overflow-x-auto border-t"
+            style={{ borderColor: 'var(--reader-rule)' }}
+          >
+            <div className={cn('mx-auto flex items-center gap-1 px-3 sm:px-6 h-9 w-max min-w-full transition-[margin]', panelOffset)}>
+              {chapter.sections.map((section) => (
+                <button
+                  key={section.slug}
+                  type="button"
+                  onClick={() => openSection(section.slug)}
+                  aria-current={activeSection === section.slug ? 'true' : undefined}
+                  className="shrink-0 max-w-[13rem] truncate px-2.5 py-1 rounded-sm font-sans text-[0.6875rem] tracking-caps uppercase transition-colors"
+                  style={{
+                    color:
+                      activeSection === section.slug ? 'var(--reader-accent)' : 'var(--reader-muted)',
+                    background:
+                      activeSection === section.slug
+                        ? 'color-mix(in srgb, var(--reader-accent) 12%, transparent)'
+                        : 'transparent',
+                  }}
+                >
+                  {section.title}
+                </button>
+              ))}
+              <span
+                aria-hidden="true"
+                className="shrink-0 h-4 w-px mx-1"
+                style={{ background: 'var(--reader-rule)' }}
+              />
+              <button
+                type="button"
+                onClick={() => openSection('all')}
+                aria-current={activeSection === 'all' ? 'true' : undefined}
+                className="shrink-0 px-2.5 py-1 rounded-sm font-sans text-[0.6875rem] tracking-caps uppercase transition-colors"
+                style={{
+                  color: activeSection === 'all' ? 'var(--reader-accent)' : 'var(--reader-muted)',
+                  background:
+                    activeSection === 'all'
+                      ? 'color-mix(in srgb, var(--reader-accent) 12%, transparent)'
+                      : 'transparent',
+                }}
+              >
+                Entire issue
+              </button>
+            </div>
+          </nav>
+        )}
         <ScrollProgressBar chapterSlug={chapterSlug} />
       </header>
 
@@ -323,6 +479,13 @@ export function ReaderPage() {
           '--reader-line-height': settings.lineHeight,
         }}
       >
+        {periodical ? (
+          <CrisisMasthead
+            chapter={chapter}
+            activeSection={activeSection}
+            onSelectSection={openSection}
+          />
+        ) : (
         <motion.header
           className="pt-14 pb-10 text-center"
           initial={{ opacity: 0 }}
@@ -366,14 +529,19 @@ export function ReaderPage() {
             </div>
           )}
         </motion.header>
+        )}
 
         <div ref={textContainerRef} className="reader-text pb-6">
-          {chapter.sections.map((section) => (
-            <section key={section.id} className="mb-12">
+          {visibleSections.map((section) => {
+            const firstBodyId = periodical
+              ? section.paragraphs.find((paragraph) => paragraph.kind === 'body')?.id
+              : undefined
+            return (
+            <section key={section.id} className={periodical ? 'mb-14' : 'mb-12'}>
               {section.title && (
                 <h2
                   className="caps-label text-center mb-8"
-                  style={{ color: 'var(--reader-muted)' }}
+                  style={{ color: periodical ? 'var(--reader-ink)' : 'var(--reader-muted)' }}
                   id={`section-${section.slug}`}
                 >
                   {section.title}
@@ -390,6 +558,8 @@ export function ReaderPage() {
                     showMarks={showMarks}
                     showNumbers={showNumbers}
                     inlineNumbers={scripture}
+                    newspaper={periodical}
+                    dropCap={paragraph.id === firstBodyId}
                     reveal={revealParagraphs}
                     highlights={highlightsByParagraph.get(paragraph.id) || EMPTY_HIGHLIGHTS}
                     activePassageSlug={activePassageSlug}
@@ -399,7 +569,8 @@ export function ReaderPage() {
                 ))}
               </div>
             </section>
-          ))}
+            )
+          })}
         </div>
 
         {/* End of chapter */}
@@ -460,15 +631,30 @@ export function ReaderPage() {
           <nav
             className="mt-12 flex items-stretch justify-between gap-4 border-t pt-8"
             style={{ borderColor: 'var(--reader-rule)' }}
-            aria-label="Chapter navigation"
+            aria-label={periodical ? 'Section navigation' : 'Chapter navigation'}
           >
-            {chapter.previous_chapter ? (
+            {/* Reading section by section walks the departments first and
+                crosses into the neighbouring issue at either end. */}
+            {previousSection ? (
+              <button
+                type="button"
+                onClick={() => openSection(previousSection.slug)}
+                className="group flex-1 text-left hover:opacity-80 transition-opacity"
+              >
+                <span className="caps-label flex items-center gap-1.5" style={{ color: 'var(--reader-muted)' }}>
+                  <ArrowLeft size={12} aria-hidden="true" /> Previous section
+                </span>
+                <span className="mt-1 block font-serif text-[0.9375rem]" style={{ color: 'var(--reader-ink)' }}>
+                  {previousSection.title}
+                </span>
+              </button>
+            ) : chapter.previous_chapter ? (
               <Link
                 to={`/read/${chapter.previous_chapter.slug}`}
                 className="group flex-1 text-left hover:opacity-80 transition-opacity"
               >
                 <span className="caps-label flex items-center gap-1.5" style={{ color: 'var(--reader-muted)' }}>
-                  <ArrowLeft size={12} aria-hidden="true" /> Previous
+                  <ArrowLeft size={12} aria-hidden="true" /> {periodical ? 'Previous issue' : 'Previous'}
                 </span>
                 <span className="mt-1 block font-serif text-[0.9375rem]" style={{ color: 'var(--reader-ink)' }}>
                   {chapter.previous_chapter.title}
@@ -477,13 +663,26 @@ export function ReaderPage() {
             ) : (
               <div className="flex-1" />
             )}
-            {chapter.next_chapter ? (
+            {nextSection ? (
+              <button
+                type="button"
+                onClick={() => openSection(nextSection.slug)}
+                className="group flex-1 text-right hover:opacity-80 transition-opacity"
+              >
+                <span className="caps-label flex items-center justify-end gap-1.5" style={{ color: 'var(--reader-muted)' }}>
+                  Next section <ArrowRight size={12} aria-hidden="true" />
+                </span>
+                <span className="mt-1 block font-serif text-[0.9375rem]" style={{ color: 'var(--reader-ink)' }}>
+                  {nextSection.title}
+                </span>
+              </button>
+            ) : chapter.next_chapter ? (
               <Link
                 to={`/read/${chapter.next_chapter.slug}`}
                 className="group flex-1 text-right hover:opacity-80 transition-opacity"
               >
                 <span className="caps-label flex items-center justify-end gap-1.5" style={{ color: 'var(--reader-muted)' }}>
-                  Next <ArrowRight size={12} aria-hidden="true" />
+                  {periodical ? 'Next issue' : 'Next'} <ArrowRight size={12} aria-hidden="true" />
                 </span>
                 <span className="mt-1 block font-serif text-[0.9375rem]" style={{ color: 'var(--reader-ink)' }}>
                   {chapter.next_chapter.title}

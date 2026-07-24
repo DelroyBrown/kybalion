@@ -24,6 +24,8 @@ export const READER_THEMES = [
   { key: 'abyss', label: 'Abyss' },
   { key: 'sanctum', label: 'Sanctum' },
   { key: 'vellum', label: 'Vellum' },
+  { key: 'gazette', label: 'Gazette' },
+  { key: 'pressroom', label: 'Pressroom' },
 ]
 
 export const READING_MODES = [

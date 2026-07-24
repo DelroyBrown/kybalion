@@ -7,6 +7,7 @@ import {
   Home,
   Info,
   Network,
+  Newspaper,
   ScrollText,
   Search,
   Settings,
@@ -17,6 +18,7 @@ import { useActiveBook } from '../../stores/appStore'
 const ALL_ITEMS = [
   { to: '/home', label: 'Home', icon: Home },
   { to: '/read', label: 'Read', icon: BookOpen },
+  { to: '/crisis', label: 'The Archive', icon: Newspaper, periodicalOnly: true },
   { to: '/principles', label: 'The Seven Principles', icon: Compass, principlesOnly: true },
   { to: '/map', label: 'Knowledge Map', icon: Network, principlesOnly: true },
   { to: '/search', label: 'Search', icon: Search },
@@ -29,9 +31,14 @@ const ALL_ITEMS = [
 ]
 
 /** Navigation for the active book — the Kybalion-specific study features
- *  (principles, knowledge map) withdraw when another book is open. */
+ *  (principles, knowledge map) withdraw when another book is open, and
+ *  the issue archive appears only when a periodical is. */
 export function useNavItems() {
   const book = useActiveBook()
-  const items = ALL_ITEMS.filter((item) => !item.principlesOnly || book.hasPrinciples)
+  const items = ALL_ITEMS.filter(
+    (item) =>
+      (!item.principlesOnly || book.hasPrinciples) &&
+      (!item.periodicalOnly || book.kind === 'periodical')
+  )
   return { items, barItems: items.slice(0, 4) }
 }

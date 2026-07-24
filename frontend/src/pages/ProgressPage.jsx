@@ -5,6 +5,7 @@ import { useBook } from '../api/library'
 import { useProgress, useProgressSummary } from '../api/userData'
 import { EmptyState } from '../components/common/states'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useActiveBook } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 import { formatDuration, toRoman } from '../utils/format'
@@ -12,6 +13,7 @@ import { formatDuration, toRoman } from '../utils/format'
 export function ProgressPage() {
   useDocumentTitle('Reading Progress')
   const authed = useAuthStore((state) => Boolean(state.access))
+  const activeBook = useActiveBook()
   const { data: book } = useBook()
   const { data: serverProgress } = useProgress()
   const { data: summary } = useProgressSummary()
@@ -39,7 +41,7 @@ export function ProgressPage() {
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: 'Overall', value: `${summary.overall_percent}%` },
-            { label: 'Chapters', value: `${summary.chapters_completed}/${summary.chapters_total}` },
+            { label: `${activeBook.chapterLabel}s`, value: `${summary.chapters_completed}/${summary.chapters_total}` },
             { label: 'Time reading', value: formatDuration(summary.total_reading_seconds) },
             { label: 'Sessions', value: summary.session_count },
           ].map((stat) => (
@@ -72,7 +74,7 @@ export function ProgressPage() {
                   className="group flex items-center gap-4 rounded-sm px-3 py-3 -mx-3 hover:bg-ink-800/50 transition-colors"
                 >
                   <span className="font-display text-sm text-parchment-500 w-8 shrink-0">
-                    {toRoman(chapter.number)}
+                    {activeBook.chapterNumerals === 'roman' ? toRoman(chapter.number) : chapter.number}
                   </span>
                   <span className="font-serif text-[0.9375rem] text-parchment-200 group-hover:text-gold-200 flex-1 min-w-0 truncate">
                     {chapter.title}

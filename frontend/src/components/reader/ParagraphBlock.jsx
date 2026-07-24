@@ -24,6 +24,8 @@ export const ParagraphBlock = memo(
       showMarks,
       showNumbers,
       inlineNumbers = false, // scripture: numerals inline at the verse head
+      newspaper = false, // The Crisis: crossheads, set verse, drop capitals
+      dropCap = false, // first body paragraph of a newspaper section
       reveal = true,
       highlights = [],
       activePassageSlug,
@@ -141,11 +143,14 @@ export const ParagraphBlock = memo(
           <p
             className={cn(
               isEpigraph && 'text-center italic px-2 sm:px-8 py-2',
-              isQuote && 'italic border-l-2 pl-5'
+              isQuote && 'italic border-l-2 pl-5',
+              newspaper && isEpigraph && 'crisis-crosshead',
+              newspaper && isQuote && 'crisis-verse',
+              newspaper && dropCap && !isEpigraph && !isQuote && 'crisis-dropcap'
             )}
             style={{
               borderColor: isQuote ? 'var(--reader-rule)' : undefined,
-              fontSize: isEpigraph ? 'calc(1.25rem * var(--reader-font-scale, 1))' : undefined,
+              fontSize: isEpigraph && !newspaper ? 'calc(1.25rem * var(--reader-font-scale, 1))' : undefined,
             }}
           >
             {/* A sibling element, never part of paragraph.text: highlight and

@@ -75,7 +75,14 @@ class ReadingProgressViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def summary(self, request):
         progress = self.get_queryset()
-        chapters_total = Chapter.objects.filter(is_published=True).count()
+        chapters = Chapter.objects.filter(is_published=True)
+        # ?book=<slug> scopes the summary to one book: with a 242-issue
+        # periodical on the shelf, an all-books percentage means nothing.
+        book = request.query_params.get("book")
+        if book:
+            chapters = chapters.filter(book__slug=book)
+            progress = progress.filter(chapter__book__slug=book)
+        chapters_total = chapters.count()
         completed = progress.filter(completed=True).count()
         overall = (
             sum(min(p.percent_complete, 100.0) for p in progress) / chapters_total

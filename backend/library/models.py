@@ -61,6 +61,10 @@ class Chapter(TimeStampedModel):
     subtitle = models.CharField(max_length=300, blank=True)
     introduction = models.TextField(blank=True, help_text="Editorial introduction — not original text.")
     summary = models.TextField(blank=True, help_text="Editorial end-of-chapter summary — not original text.")
+    source_url = models.URLField(
+        blank=True,
+        help_text="Original scan or source of this chapter, when it has one of its own (e.g. a periodical issue).",
+    )
     order = models.PositiveIntegerField(default=0)
     is_published = models.BooleanField(default=True)
 

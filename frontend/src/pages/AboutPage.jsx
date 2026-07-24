@@ -10,6 +10,7 @@ export function AboutPage() {
   const { data: book, isLoading } = useBook()
   const activeBook = useActiveBook()
   const hermetic = activeBook.hasPrinciples
+  const periodical = activeBook.kind === 'periodical'
 
   return (
     <div className="mx-auto max-w-2xl px-5 sm:px-8 py-12 lg:py-16">
@@ -61,7 +62,22 @@ export function AboutPage() {
           <Reveal>
           <section>
             <h2 className="caps-label text-gold-400">What is original, what is added</h2>
-            {hermetic ? (
+            {periodical ? (
+              <>
+                <p className="editorial-body mt-3">
+                  Every issue's text is recovered by optical character recognition from microfilm
+                  scans of the original printed pages. What you read is what the press set in
+                  1910–1930 — including its occasional scars: a mis-read letter, a broken word,
+                  a name the scanner stumbled over. Nothing has been rewritten or modernised,
+                  and every issue links to its original page scans for comparison.
+                </p>
+                <p className="editorial-body mt-3">
+                  Advertising pages, running heads, and photograph captions are omitted from the
+                  reading text; department and article divisions are recovered from the printed
+                  layout. All issues shown were published before 1931 and are in the public domain.
+                </p>
+              </>
+            ) : hermetic ? (
               <>
                 <p className="editorial-body mt-3">
                   The original 1908 text is always set in serif type on the reading surface.
@@ -100,7 +116,15 @@ export function AboutPage() {
           <Reveal>
           <section>
             <h2 className="caps-label text-gold-400">A note on interpretation</h2>
-            {hermetic ? (
+            {periodical ? (
+              <p className="editorial-body mt-3">
+                The Crisis is presented as a primary historical record: the voice of the NAACP
+                and of W. E. B. Du Bois in their own era, reporting lynchings and triumphs,
+                arguing, mourning, and celebrating in the language of their time. It is offered
+                unabridged for study, remembrance, and the plain reading of history as it was
+                written down.
+              </p>
+            ) : hermetic ? (
               <p className="editorial-body mt-3">
                 This edition treats The Kybalion as a historical philosophical document worth
                 studying, questioning, and testing against experience — not as unquestionable

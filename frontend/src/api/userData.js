@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { useAppStore } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 import { api } from './client'
@@ -187,9 +188,12 @@ export function useProgress() {
 
 export function useProgressSummary() {
   const authed = useAuthed()
+  // Scoped to the open book: chapter counts and percentages mean nothing
+  // averaged across a 15-chapter treatise and a 242-issue periodical.
+  const book = useAppStore((state) => state.activeBookSlug)
   return useQuery({
-    queryKey: ['progress-summary'],
-    queryFn: () => api('/me/progress/summary/'),
+    queryKey: ['progress-summary', book],
+    queryFn: () => api(`/me/progress/summary/?book=${book}`),
     enabled: authed,
   })
 }

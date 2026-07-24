@@ -1,3 +1,13 @@
+# The Crisis (1910–1930) — all public domain
+
+| Source | Contents | Licence | Pipeline |
+|---|---|---|---|
+| Internet Archive collection `pub_crisis` (Serials in Microfilm) | **The Crisis: A Record of the Darker Races**, every monthly issue Nov 1910 – Dec 1930 (242 issues, most months in two independent microfilm scans) | Public domain — all issues published in the US before 1931 | `scripts/download_crisis.py` fetches the raw OCR text (and issue index) into `sources/crisis/` (git-ignored; re-run to regenerate). `scripts/build_crisis.py` then picks the better-reading scan per month, downloads its hOCR (word-level OCR with page geometry, font sizes and confidences), strips advertising pages / running heads / captions / low-confidence garble, reconstructs departments, feature articles, crossheads and verse, and writes `backend/library/data/the_crisis.json`. Seeded by `python manage.py seed_the_crisis`. A per-issue QA summary lands in `sources/crisis/build_report.txt`. |
+
+Text quality note: this is honest OCR of microfilm — misread letters and
+broken words remain. Each issue's Chapter row carries `source_url`
+pointing at its original page scans on archive.org.
+
 # Ethiopian-canon source texts (all public domain)
 
 | File | Contents | Source | Licence | Quality |

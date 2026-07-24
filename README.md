@@ -1,14 +1,17 @@
 # The Perennial — A Living Library of Sacred Texts
 
 A dark, atmospheric, production-grade web application — a growing library
-of sacred and wisdom texts. It currently holds two books —
-*The Kybalion* (Three Initiates, 1908) and *The Ethiopian Bible* (the
+of sacred and wisdom texts. It currently holds three works —
+*The Kybalion* (Three Initiates, 1908), *The Ethiopian Bible* (the
 broader canon of the Ethiopian Orthodox Tewahedo Church, ninety books
-assembled from public-domain and freely licensed English translations) —
-switchable from the navigation rail, each with its own colour scheme
-(tarnished gold on warm near-black for the Kybalion; moon-silver on indigo
-night for the Bible), plus app-wide dark and light modes and a slow,
-weighted scroll throughout.
+assembled from public-domain and freely licensed English translations),
+and *The Crisis* (W. E. B. Du Bois's NAACP magazine: all 242 issues of
+its public-domain run, Nov 1910 – Dec 1930, browsable issue by issue in
+an old-newspaper reading dress) — switchable from the navigation rail,
+each with its own colour scheme (tarnished gold on warm near-black for
+the Kybalion; moon-silver on indigo night for the Bible; newsprint cream
+and editorial red for The Crisis), plus app-wide dark and light modes
+and a slow, weighted scroll throughout.
 
 > Kybalion text: the complete chapters I–XV of the public-domain 1908
 > edition, loaded verbatim from the Project Gutenberg transcription
@@ -21,10 +24,19 @@ weighted scroll throughout.
 > from the original text. AI-generated commentary, where present, is
 > explicitly labelled with its model and review status.
 >
+> The Crisis text: recovered by OCR from the Internet Archive's microfilm
+> digitisation (collection `pub_crisis`) — advertising pages, running heads
+> and captions stripped, departments and articles reconstructed from the
+> printed layout; scars of the scan remain, and every issue links to its
+> original page images.
+>
 > Content pipeline: `python scripts/build_ethiopian_bible.py` regenerates
 > `backend/library/data/ethiopian_bible.json` from `sources/`;
-> `python manage.py seed_ethiopian_bible` loads it (the deploy runs both
-> seed commands with `--if-empty`).
+> `python manage.py seed_ethiopian_bible` loads it. For The Crisis,
+> `python scripts/download_crisis.py` fetches the raw OCR, then
+> `python scripts/build_crisis.py` writes `backend/library/data/the_crisis.json`
+> and `python manage.py seed_the_crisis` loads it (the deploy runs every
+> seed command with `--if-empty`).
 
 ## Product concept
 

@@ -7,6 +7,14 @@ import '@fontsource/cormorant-garamond/500.css'
 import '@fontsource/inter/300.css'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
+// The Crisis wears period newspaper type: a fat-face Didone for mastheads
+// and headlines, Old Standard for decks and datelines.
+import '@fontsource/playfair-display/500.css'
+import '@fontsource/playfair-display/700.css'
+import '@fontsource/playfair-display/900.css'
+import '@fontsource/old-standard-tt/400.css'
+import '@fontsource/old-standard-tt/400-italic.css'
+import '@fontsource/old-standard-tt/700.css'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'

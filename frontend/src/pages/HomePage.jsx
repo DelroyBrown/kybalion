@@ -10,7 +10,7 @@ import { Reveal } from '../components/common/Reveal'
 import { Sigil } from '../components/common/Sigil'
 import { PrincipleSymbol } from '../components/principles/PrincipleSymbol'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import { BOOKS, useActiveBook } from '../stores/appStore'
+import { bookForChapterSlug, useActiveBook } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 import { accent } from '../utils/accents'
@@ -46,8 +46,8 @@ export function HomePage() {
   }, [prompts])
 
   const continueReading = useMemo(() => {
-    // Ethiopian Bible chapters are seeded with an `eb-` slug prefix.
-    const bookFor = (slug) => (slug.startsWith('eb-') ? BOOKS['ethiopian-bible'] : BOOKS['the-kybalion'])
+    // Chapter slugs carry their book: eb- (Bible), crisis- (The Crisis).
+    const bookFor = bookForChapterSlug
     if (authed && serverProgress?.length) {
       // Ordered by -updated_at: resume the most recently touched unfinished
       // chapter, whichever book it belongs to.
@@ -137,16 +137,22 @@ export function HomePage() {
               </Link>
             ) : (
               <Link
-                to="/read"
+                to={activeBook.kind === 'periodical' ? '/crisis' : '/read'}
                 className="group mt-4 block border hairline rounded-sm p-6 hover:border-gold-600/60 transition-colors"
               >
                 <p className="font-display text-2xl text-parchment-100 group-hover:text-gold-200 transition-colors">
-                  {hermetic ? 'Chapter I — The Hermetic Philosophy' : 'Genesis — In the beginning'}
+                  {activeBook.kind === 'periodical'
+                    ? 'November 1910 — Vol. 1, No. 1'
+                    : hermetic
+                      ? 'Chapter I — The Hermetic Philosophy'
+                      : 'Genesis — In the beginning'}
                 </p>
                 <p className="editorial-body mt-2 text-parchment-400">
-                  {hermetic
-                    ? 'Enter the text where the tradition itself begins: with readiness, and with keys.'
-                    : 'Open the broadest canon in Christendom at its first words.'}
+                  {activeBook.kind === 'periodical'
+                    ? 'Open the archive at its first number — or browse twenty years of issues and choose your own.'
+                    : hermetic
+                      ? 'Enter the text where the tradition itself begins: with readiness, and with keys.'
+                      : 'Open the broadest canon in Christendom at its first words.'}
                 </p>
               </Link>
             )}
@@ -223,8 +229,38 @@ export function HomePage() {
           </section>
           </Reveal>
 
-          {/* Knowledge map preview (Kybalion) / Daily psalm (Ethiopian Bible) */}
-          {hermetic ? (
+          {/* Knowledge map (Kybalion) / daily psalm (Bible) / archive (Crisis) */}
+          {activeBook.kind === 'periodical' ? (
+            <Reveal delay={0.25}>
+            <section aria-labelledby="archive-heading">
+              <h2 id="archive-heading" className="caps-label text-parchment-500 flex items-center gap-2">
+                <Network size={13} aria-hidden="true" /> From the archive
+              </h2>
+              <Link
+                to={`/read/${(book?.chapters || [])[dayOfYear() % Math.max(book?.chapters?.length || 1, 1)]?.slug || ''}`}
+                className="group lift mt-3 flex items-center justify-center border hairline rounded-sm py-8 hover:border-gold-600/60"
+              >
+                <BookEmblem
+                  bookSlug="the-crisis"
+                  size={88}
+                  className="text-ink-500 group-hover:text-gold-600 transition-colors"
+                />
+                <span className="sr-only">Open today's issue from the archive</span>
+              </Link>
+              <p className="editorial-body mt-2 text-parchment-500 text-sm">
+                {(book?.chapters || [])[dayOfYear() % Math.max(book?.chapters?.length || 1, 1)]
+                  ? `${book.chapters[dayOfYear() % book.chapters.length].title} — one of ${book.chapters.length} issues, in its turn.`
+                  : 'A different issue surfaces here each day.'}
+              </p>
+              <Link
+                to="/crisis"
+                className="mt-2 inline-flex items-center gap-2 font-sans text-sm text-gold-300 hover:text-gold-200"
+              >
+                Browse all issues <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+            </section>
+            </Reveal>
+          ) : hermetic ? (
             <Reveal delay={0.25}>
             <section aria-labelledby="map-heading">
               <h2 id="map-heading" className="caps-label text-parchment-500 flex items-center gap-2">

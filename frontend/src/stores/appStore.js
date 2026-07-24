@@ -3,13 +3,16 @@ import { persist } from 'zustand/middleware'
 
 import { useReaderStore } from './readerStore'
 
-/** Everything known about the library's books, keyed by API slug. */
+/** Everything known about the library's books, keyed by API slug.
+ *  `kind`: 'treatise' | 'scripture' | 'periodical' — steers the reader's
+ *  numbering, navigation, and layout conventions. */
 export const BOOKS = {
   'the-kybalion': {
     slug: 'the-kybalion',
     title: 'The Kybalion',
     shortTitle: 'Kybalion',
     tagline: 'The Hermetic Philosophy of Ancient Egypt and Greece',
+    kind: 'treatise',
     chapterLabel: 'Chapter',
     chapterNumerals: 'roman',
     defaultReaderTheme: 'midnight',
@@ -20,14 +23,33 @@ export const BOOKS = {
     title: 'The Ethiopian Bible',
     shortTitle: 'Ethiopian Bible',
     tagline: 'The Broader Canon of the Tewahedo Church',
+    kind: 'scripture',
     chapterLabel: 'Book',
     chapterNumerals: 'arabic',
     defaultReaderTheme: 'abyss',
     hasPrinciples: false,
   },
+  'the-crisis': {
+    slug: 'the-crisis',
+    title: 'The Crisis',
+    shortTitle: 'The Crisis',
+    tagline: 'A Record of the Darker Races',
+    kind: 'periodical',
+    chapterLabel: 'Issue',
+    chapterNumerals: 'arabic',
+    defaultReaderTheme: 'gazette',
+    hasPrinciples: false,
+  },
 }
 
-export const BOOK_ORDER = ['the-kybalion', 'ethiopian-bible']
+export const BOOK_ORDER = ['the-kybalion', 'ethiopian-bible', 'the-crisis']
+
+/** The book a chapter slug belongs to, from its seeded slug prefix. */
+export function bookForChapterSlug(slug) {
+  if (slug?.startsWith('eb-')) return BOOKS['ethiopian-bible']
+  if (slug?.startsWith('crisis-')) return BOOKS['the-crisis']
+  return BOOKS['the-kybalion']
+}
 
 /**
  * App-level appearance and library state: which book is open and whether
