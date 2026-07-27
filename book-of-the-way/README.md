@@ -97,6 +97,8 @@ Some remain seeds for months or years before becoming verses.
 
 7. Many postpone the life they want, believing time is waiting with them.
 
+8. Time moves alike for every clock, yet never alike for every person.
+
 ---
 
 ## Motto
