@@ -7,9 +7,12 @@ import { api } from './client'
 // session so returning to a long chapter never refetches megabytes.
 const CONTENT_CACHE = { staleTime: 60 * 60 * 1000, gcTime: 60 * 60 * 1000 }
 
-/** The active book (chapters list included), switching with the app store. */
-export function useBook() {
-  const slug = useAppStore((state) => state.activeBookSlug)
+/** A book with its chapter list — the app-store's active book by default,
+ *  or an explicit slug (e.g. the book a specific open chapter belongs to,
+ *  which the store may not have caught up with yet). */
+export function useBook(slugOverride) {
+  const activeSlug = useAppStore((state) => state.activeBookSlug)
+  const slug = slugOverride || activeSlug
   return useQuery({
     queryKey: ['book', slug],
     queryFn: () => api(`/books/${slug}/`),

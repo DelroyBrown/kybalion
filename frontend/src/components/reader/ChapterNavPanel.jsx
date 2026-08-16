@@ -4,7 +4,7 @@ import { Check, X } from 'lucide-react'
 
 import { useBook } from '../../api/library'
 import { useProgress } from '../../api/userData'
-import { useActiveBook } from '../../stores/appStore'
+import { bookForChapterSlug } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useLocalProgressStore } from '../../stores/localProgressStore'
 import { cn } from '../../utils/cn'
@@ -17,13 +17,16 @@ import { IconButton } from '../common/Button'
  * their traditional divisions (carried in `subtitle`).
  */
 export function ChapterNavPanel({ open, onClose, currentSlug }) {
-  const { data: book } = useBook()
-  const activeBook = useActiveBook()
+  // Always list the book the open chapter belongs to — the app-store's
+  // active book can lag a chapter opened from elsewhere, and a panel built
+  // from it linked into the wrong book entirely.
+  const bookConfig = bookForChapterSlug(currentSlug)
+  const { data: book } = useBook(bookConfig.slug)
   const authed = useAuthStore((state) => Boolean(state.access))
   const { data: serverProgress } = useProgress()
   const localProgress = useLocalProgressStore((state) => state.byChapter)
-  const scripture = activeBook.kind === 'scripture'
-  const periodical = activeBook.kind === 'periodical'
+  const scripture = bookConfig.kind === 'scripture'
+  const periodical = bookConfig.kind === 'periodical'
 
   const progressFor = (slug) => {
     if (authed && serverProgress) {

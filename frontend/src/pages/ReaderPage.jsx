@@ -30,7 +30,7 @@ import { PrincipleSymbol } from '../components/principles/PrincipleSymbol'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useIsDesktop } from '../hooks/useMediaQuery'
 import { useReadingProgressTracker } from '../hooks/useReadingProgressTracker'
-import { useActiveBook, useAppStore } from '../stores/appStore'
+import { bookForChapterSlug, useAppStore } from '../stores/appStore'
 import { useAuthStore } from '../stores/authStore'
 import { useLocalProgressStore } from '../stores/localProgressStore'
 import { useReaderStore } from '../stores/readerStore'
@@ -56,15 +56,28 @@ const SCROLL_ANCHOR_OFFSET = 88
 
 /**
  * Instantly scroll the window so the element sits just under the header.
- * Runs a second corrective pass on the next frame: with content-visibility
- * the geometry settles only once the target region has actually rendered.
+ * Corrective passes run on following frames until the position holds: with
+ * content-visibility the page's geometry is only estimated until regions
+ * actually render, and deep into a long book a single correction still
+ * left the target hundreds of pixels off.
  */
 function anchorScrollTo(element) {
   if (!element) return false
-  scrollToY(element.getBoundingClientRect().top + window.scrollY - SCROLL_ANCHOR_OFFSET)
-  requestAnimationFrame(() => {
+  const align = () =>
     scrollToY(element.getBoundingClientRect().top + window.scrollY - SCROLL_ANCHOR_OFFSET)
-  })
+  align()
+  let passes = 0
+  const settle = () => {
+    const drift = Math.abs(element.getBoundingClientRect().top - SCROLL_ANCHOR_OFFSET)
+    // The drift never closes at the document's edges, where the target
+    // position clamps — the pass cap keeps that from looping forever.
+    if (drift > 1 && passes < 8) {
+      passes += 1
+      align()
+      requestAnimationFrame(settle)
+    }
+  }
+  requestAnimationFrame(settle)
   return true
 }
 
@@ -116,11 +129,15 @@ export function ReaderPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: chapter, isLoading, isError, error, refetch } = useChapter(chapterSlug)
-  const activeBook = useActiveBook()
   const setActiveBook = useAppStore((state) => state.setActiveBook)
-  const scripture = activeBook.kind === 'scripture'
-  const periodical = activeBook.kind === 'periodical'
-  const roman = activeBook.chapterNumerals === 'roman'
+  // The open chapter's own book, known synchronously from its slug. The
+  // app-store's active book only catches up in an effect below — deriving
+  // layout from it rendered a chapter opened from another book with the
+  // wrong masthead, numbering, and chapter list until the sync landed.
+  const book = bookForChapterSlug(chapterSlug)
+  const scripture = book.kind === 'scripture'
+  const periodical = book.kind === 'periodical'
+  const roman = book.chapterNumerals === 'roman'
   const numeral = (n) => (roman ? toRoman(n) : n)
   useDocumentTitle(
     chapter
@@ -386,7 +403,7 @@ export function ReaderPage() {
           </IconButton>
           <div className="min-w-0 flex-1 px-2">
             <p className="caps-label truncate" style={{ color: 'var(--reader-muted)' }}>
-              {activeBook.chapterLabel} {numeral(chapter.number)} · {chapter.title}
+              {book.chapterLabel} {numeral(chapter.number)} · {chapter.title}
             </p>
           </div>
           <IconButton
@@ -402,7 +419,7 @@ export function ReaderPage() {
                 object_id: chapter.slug,
                 chapter_slug: chapter.slug,
                 title: chapter.title,
-                label: `${activeBook.chapterLabel} ${numeral(chapter.number)}`,
+                label: `${book.chapterLabel} ${numeral(chapter.number)}`,
               })
             }}
           >
@@ -499,7 +516,7 @@ export function ReaderPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.7 }}
           >
-            {activeBook.chapterLabel} {numeral(chapter.number)}
+            {book.chapterLabel} {numeral(chapter.number)}
           </motion.p>
           <motion.h1
             className="mt-3 font-display font-light text-3xl sm:text-4xl"
