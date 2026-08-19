@@ -20,6 +20,7 @@ import { IconButton } from '../components/common/Button'
 import { Reveal, useRevealAllowed } from '../components/common/Reveal'
 import { scrollToY } from '../components/common/SmoothScroll'
 import { ErrorState, LoadingVeil } from '../components/common/states'
+import { BookStrip } from '../components/reader/BookStrip'
 import { ChapterNavPanel } from '../components/reader/ChapterNavPanel'
 import { CrisisMasthead } from '../components/reader/CrisisMasthead'
 import { HoverPreview } from '../components/reader/HoverPreview'
@@ -435,6 +436,10 @@ export function ReaderPage() {
             {distractionFree ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </IconButton>
         </div>
+        {/* The whole canon, always one tap away. */}
+        {scripture && (
+          <BookStrip bookSlug={book.slug} currentSlug={chapterSlug} className={panelOffset} />
+        )}
         {/* The issue's departments, always one tap away. */}
         {periodical && chapter.sections.length > 1 && (
           <nav
